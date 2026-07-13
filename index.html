@@ -1693,6 +1693,7 @@ async function renderFriendsList(){
         <span>${f.inner?'⭐ ':''}${escapeHtml(f.displayName)}</span>
         <span class="entry-actions">
           <button class="btn ghost small" onclick='toggleInnerCircle(${JSON.stringify(uid)}, ${!f.inner})'>${f.inner?'Remove star':'Star'}</button>
+          <button class="btn ghost small" onclick='reportUser(${JSON.stringify(f.displayName)})'>🚩 Report</button>
           <button class="btn danger small" onclick='blockFriend(${JSON.stringify(uid)}, ${JSON.stringify(f.displayName)})'>Block</button>
         </span>
       </div>
@@ -1862,7 +1863,10 @@ async function renderInboxMessages(){
     return `<div class="entry-card message-preview" onclick="openMessage('${id}')">
       <div class="entry-head">
         <span><strong>${escapeHtml(m.fromName)}</strong></span>
-        <span class="empty-note" style="font-style:normal">expires in ~${hoursLeft}h</span>
+        <span class="entry-actions">
+          <span class="empty-note" style="font-style:normal;padding:0">expires in ~${hoursLeft}h</span>
+          <button class="btn ghost small" onclick='event.stopPropagation(); reportUser(${JSON.stringify(m.fromName)})'>🚩 Report</button>
+        </span>
       </div>
       <p>${m.photo ? '📷 Photo message - tap to view' : escapeHtml(m.text.length>60 ? m.text.slice(0,60)+'…' : m.text)}</p>
     </div>`;
@@ -1901,6 +1905,15 @@ function hideMessageOnBlur(){
 const MAX_ACCOUNTS_PER_PARENT_EMAIL = 3;
 async function parentEmailKey(email){ return sha256Hex('e:'+email.trim().toLowerCase()); }
 
+const REPORT_EMAIL = 'hello.alltimediary@gmail.com';
+function reportUser(reportedName){
+  const subject = `AllTime report: ${reportedName}`;
+  const body = `Reporting user: ${reportedName}\n`
+    + `Reported by: ${session.displayName} (username: ${session.username})\n\n`
+    + `What happened? (please describe below - if this is about a message, it may already be deleted, so include as much detail as you can)\n\n`;
+  window.location.href = `mailto:${REPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  logAnalyticsEvent('report_filed');
+}
 async function requestParentConsent(){
   const parentEmail = document.getElementById('parentConsentEmail').value.trim();
   if(!parentEmail){ notify('Please enter a parent or guardian\'s email first.'); return; }
