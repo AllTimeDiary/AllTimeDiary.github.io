@@ -169,6 +169,7 @@ main{max-width:960px;margin:0 auto;padding:16px}
   margin-bottom:16px;
 }
 .affirmation-banner{padding:12px 16px}
+.weather-line{font-size:.78rem;color:var(--ink-soft);text-align:center;margin-top:2px}
 .today-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -247,6 +248,9 @@ main{max-width:960px;margin:0 auto;padding:16px}
   background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:8px 12px;
 }
 .week-row.today{border-color:var(--pink);background:var(--pink-light)}
+.week-row{cursor:pointer;transition:transform .12s ease, box-shadow .12s ease}
+.week-row:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(169,143,224,0.18)}
+.week-row:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
 .week-row-day{flex:0 0 56px;text-align:center;line-height:1.1}
 .week-row-day .dayname{display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-soft)}
 .week-row.today .week-row-day .dayname{color:var(--pink)}
@@ -338,6 +342,24 @@ footer{
 }
 #inboxLocked h2{color:var(--ink)}
 #inboxLocked p{margin:0 0 10px}
+
+/* Clickable entries inside modals (day detail, diary) */
+.clickable-chip{cursor:pointer;transition:transform .12s ease}
+.clickable-chip:hover{transform:translateY(-1px)}
+
+/* Kid-friendly time picker */
+.time-picker-panel{
+  margin-top:8px;padding:10px;background:var(--card-bg);border:2px solid var(--line);border-radius:12px;
+}
+.time-picker-section{margin-bottom:8px}
+.time-picker-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:700;margin-bottom:4px}
+.time-picker-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.time-picker-ampm{grid-template-columns:repeat(2,1fr)}
+.time-btn{
+  font-size:1rem;font-weight:600;background:var(--bg);border:2px solid var(--line);
+  border-radius:10px;padding:8px 4px;cursor:pointer;min-height:40px;
+}
+.time-btn.selected{border-color:var(--pink);background:var(--pink-light);color:var(--ink)}
 
 /* Signup cap message */
 .signup-cap-message{text-align:center;padding:12px 4px 20px}
@@ -446,6 +468,7 @@ footer{
     <div class="card affirmation-banner">
       <div class="affirmation" id="affirmation"></div>
       <div class="greeting" id="greeting"></div>
+      <div class="weather-line hidden" id="weatherLine"></div>
     </div>
     <div class="today-grid">
       <div class="card tile" role="button" tabindex="0" onclick="switchTab('calendar')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchTab('calendar');}">
@@ -524,11 +547,11 @@ footer{
 
   <section id="tab-achievements" class="tab-panel">
     <div class="card">
-      <h2>🥇 Medals &amp; competitions</h2>
+      <h2>🥇 Medals &amp; Competitions</h2>
       <form onsubmit="submitAchieveForm(event,'medals')">
         <div class="row">
           <div class="field"><label>Date</label><input type="date" name="date" required></div>
-          <div class="field"><label>Competition</label><input type="text" name="title" placeholder="e.g. Springtown Dance Festival" required></div>
+          <div class="field"><label>Competition</label><input type="text" name="title" id="medalsTitleInput" placeholder="e.g. Springtown Dance Festival" required></div>
           <div class="field"><label>Placement</label><input type="text" name="placement" placeholder="e.g. 1st place / Gold"></div>
         </div>
         <div class="field"><label>Notes</label><textarea name="notes" placeholder="Any details worth remembering"></textarea></div>
@@ -552,7 +575,7 @@ footer{
       <form onsubmit="submitAchieveForm(event,'skills')">
         <div class="row">
           <div class="field"><label>Date</label><input type="date" name="date" required></div>
-          <div class="field"><label>Skill / move</label><input type="text" name="title" placeholder="e.g. First pirouette" required></div>
+          <div class="field"><label>Skill / move</label><input type="text" name="title" id="skillsTitleInput" placeholder="e.g. First pirouette" required></div>
         </div>
         <div class="field"><label>Notes</label><textarea name="notes" placeholder="How it felt, who helped"></textarea></div>
         <div class="field">
@@ -990,11 +1013,16 @@ function iconForActivity(activityName){
   return match ? match.icon : '⏱️';
 }
 const ACHIEVEMENT_EVENT_LABELS = {
-  dance:       { heading: '🎭 Performances & recitals', titleLabel: 'Show name', titlePlaceholder: 'e.g. Winter Recital', roleLabel: 'Role', rolePlaceholder: 'e.g. Snowflake' },
-  ballsports:  { heading: '🏆 Matches & tournaments',   titleLabel: 'Event name', titlePlaceholder: 'e.g. Club Championship', roleLabel: 'Result', rolePlaceholder: 'e.g. Won 3&2 / Shot 82' },
-  watersports: { heading: '🏆 Meets & competitions',    titleLabel: 'Event name', titlePlaceholder: 'e.g. County Swim Meet', roleLabel: 'Result', rolePlaceholder: 'e.g. Personal best time' },
-  athletics:   { heading: '🏆 Races & events',          titleLabel: 'Event name', titlePlaceholder: 'e.g. Local 10k', roleLabel: 'Result', rolePlaceholder: 'e.g. Personal best time' },
-  other:       { heading: '🏆 Events',                  titleLabel: 'Event name', titlePlaceholder: 'e.g. Club Open Day', roleLabel: 'Result', rolePlaceholder: 'e.g. Any details' }
+  dance:       { heading: '🎭 Performances & Recitals', titleLabel: 'Show name', titlePlaceholder: 'e.g. Winter Recital', roleLabel: 'Role', rolePlaceholder: 'e.g. Snowflake',
+                 medalsPlaceholder: 'e.g. Springtown Dance Festival', skillsPlaceholder: 'e.g. First pirouette' },
+  ballsports:  { heading: '🏆 Matches & Tournaments',   titleLabel: 'Event name', titlePlaceholder: 'e.g. Club Championship', roleLabel: 'Result', rolePlaceholder: 'e.g. Won 3&2 / Shot 82',
+                 medalsPlaceholder: 'e.g. Club Championship', skillsPlaceholder: 'e.g. First hole-in-one' },
+  watersports: { heading: '🏆 Meets & Competitions',    titleLabel: 'Event name', titlePlaceholder: 'e.g. County Swim Meet', roleLabel: 'Result', rolePlaceholder: 'e.g. Personal best time',
+                 medalsPlaceholder: 'e.g. County Swim Meet', skillsPlaceholder: 'e.g. First butterfly stroke' },
+  athletics:   { heading: '🏆 Races & Events',          titleLabel: 'Event name', titlePlaceholder: 'e.g. Local 10k', roleLabel: 'Result', rolePlaceholder: 'e.g. Personal best time',
+                 medalsPlaceholder: 'e.g. Local 10k', skillsPlaceholder: 'e.g. First sub-5-minute mile' },
+  other:       { heading: '🏆 Events',                  titleLabel: 'Event name', titlePlaceholder: 'e.g. Club Open Day', roleLabel: 'Result', rolePlaceholder: 'e.g. Any details',
+                 medalsPlaceholder: 'e.g. Club Open Day', skillsPlaceholder: 'e.g. A new skill you learned' }
 };
 function applyAchievementLabels(){
   const labels = ACHIEVEMENT_EVENT_LABELS[session.themeGroup] || ACHIEVEMENT_EVENT_LABELS.other;
@@ -1003,6 +1031,8 @@ function applyAchievementLabels(){
   document.getElementById('performancesTitleInput').placeholder = labels.titlePlaceholder;
   document.getElementById('performancesRoleLabel').textContent = labels.roleLabel;
   document.getElementById('performancesRoleInput').placeholder = labels.rolePlaceholder;
+  document.getElementById('medalsTitleInput').placeholder = labels.medalsPlaceholder;
+  document.getElementById('skillsTitleInput').placeholder = labels.skillsPlaceholder;
 }
 function applyTheme(){
   document.documentElement.setAttribute('data-activity', session.themeGroup || 'other');
@@ -1019,7 +1049,27 @@ async function enterApp(){
   pullFromCloud();
   processFriendAccepts();
   processFriendRemovals();
-  refreshInbox();
+  await refreshInbox();
+  checkForNewMessagePopup();
+  loadWeather();
+}
+
+async function checkForNewMessagePopup(){
+  try{
+    const msgs = await loadMessages();
+    const count = Object.keys(msgs).length;
+    const lastSeenKey = dataKey('lastSeenMsgCount');
+    const lastSeen = Number(localStorage.getItem(lastSeenKey) || 0);
+    if(count > 0 && count > lastSeen){
+      openModal(`
+        <button class="close-x" onclick="closeModal()">✕</button>
+        <h2>💌 Hi ${escapeHtml(session.displayName)}!</h2>
+        <p>Looks like you've got a message! Remember, you've only got 24 hours before it disappears forever - go take a peek in your Inbox. 👀</p>
+        <button class="btn small" onclick="closeModal();switchTab('inbox')">Go to Inbox</button>
+      `);
+    }
+    localStorage.setItem(lastSeenKey, String(count));
+  }catch(e){ /* not worth bothering the user if this fails */ }
 }
 
 async function initAuthGate(){
@@ -1095,15 +1145,15 @@ function renderCalendar(){
       const dStr = fmtDate(d);
       const evs = getEventsForDate(dStr);
       const isToday = dStr===todayStr;
-      html += `<div class="week-row ${isToday?'today':''}">
+      html += `<div class="week-row ${isToday?'today':''}" role="button" tabindex="0" onclick="openDayDetail('${dStr}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDayDetail('${dStr}');}">
         <div class="week-row-day"><span class="dayname">${isToday?'Today':dayLabels[i]}</span><span class="daynum">${d.getDate()}</span></div>
         <div class="week-row-events">`;
       if(evs.length===0) html += '<span class="empty-note" style="padding:0;font-size:.85rem">Nothing planned</span>';
       evs.forEach(e=>{
-        html += `<span class="event-chip ${e.type}">${typeIcon[e.type]} ${escapeHtml(e.title)}${e.time?'<span class="time">'+e.time+'</span>':''}</span>`;
+        html += `<span class="event-chip ${e.type}">${typeIcon[e.type]} ${escapeHtml(e.title)}${e.time?'<span class="time">'+formatTime12(e.time)+'</span>':''}</span>`;
       });
       if(hasDiaryEntry(dStr)) html += '<span class="event-chip diary">📖 Diary</span>';
-      html += `</div><div class="week-row-actions"><button class="btn ghost small" onclick="openDayDetail('${dStr}')">Details</button></div></div>`;
+      html += `</div></div>`;
     }
     html += '</div>';
     container.innerHTML = html;
@@ -1160,53 +1210,130 @@ function jumpToDay(dStr){
   openDayDetail(dStr);
 }
 
+const CALENDAR_LABELS = {
+  dance:       { titlePlaceholder: 'e.g. Ballet class' },
+  ballsports:  { titlePlaceholder: 'e.g. Football training' },
+  watersports: { titlePlaceholder: 'e.g. Swimming lesson' },
+  athletics:   { titlePlaceholder: 'e.g. Running club' },
+  other:       { titlePlaceholder: 'e.g. Practice session' }
+};
+
 function openDayDetail(dStr){
   const evs = getEventsForDate(dStr);
   const dEntry = diary.find(d=>d.date===dStr);
   let html = `<button class="close-x" onclick="closeModal()">✕</button><h2>${niceDate(dStr)}</h2>`;
-  if(evs.length===0) html += '<p class="empty-note">Nothing planned yet.</p>';
+  if(evs.length===0 && !dEntry) html += '<p class="empty-note">Nothing planned yet.</p>';
   evs.forEach(e=>{
-    html += `<div class="event-chip ${e.type}">${typeIcon[e.type]} ${escapeHtml(e.title)} ${e.time?'· '+e.time:''}${e.recurring?' · repeats weekly':''}
-      <button class="btn danger small" style="margin-left:auto" onclick="deleteEvent('${e.id}')">✕</button></div>`;
+    html += `<div class="event-chip ${e.type} clickable-chip" onclick='openAddEventModal(${JSON.stringify(dStr)}, ${JSON.stringify(e.id)})'>${typeIcon[e.type]} ${escapeHtml(e.title)} ${e.time?'· '+formatTime12(e.time):''}${e.recurring?' · repeats weekly':''}
+      <button class="btn danger small" style="margin-left:auto" onclick='event.stopPropagation(); deleteEvent(${JSON.stringify(e.id)})'>✕</button></div>`;
   });
   if(dEntry){
-    html += `<div class="entry-card"><strong>Diary:</strong> ${moodEmojiString(dEntry)} ${escapeHtml(dEntry.text||'').slice(0,120)}</div>`;
+    html += `<div class="entry-card clickable-chip" onclick="closeModal();editDiaryEntry('${dEntry.id}')"><strong>Diary:</strong> ${moodEmojiString(dEntry)} ${escapeHtml(dEntry.text||'').slice(0,120)}</div>`;
   }
   html += `<div style="margin-top:10px"><button class="btn secondary small" onclick="closeModal();openAddEventModal('${dStr}')">+ Add event</button> <button class="btn small" onclick="closeModal();goToDiaryForDate('${dStr}')">📖 Diary entry</button></div>`;
   openModal(html);
 }
 
-function openAddEventModal(dStr){
-  const html = `<button class="close-x" onclick="closeModal()">✕</button><h2>Add to calendar</h2>
-    <form onsubmit="submitEventForm(event)">
-      <div class="field"><label>Date</label><input type="date" name="date" value="${dStr}" required></div>
+let timePickerState = {hour:null, minute:null, ampm:null};
+function formatTime12(value24){
+  if(!value24) return '';
+  const [hh,mm] = value24.split(':').map(Number);
+  const period = hh>=12?'PM':'AM';
+  let h12 = hh%12; if(h12===0) h12=12;
+  return `${h12}:${String(mm).padStart(2,'0')} ${period}`;
+}
+function renderTimePickerGrids(){
+  document.getElementById('hourGrid').innerHTML = Array.from({length:12},(_,i)=>i+1)
+    .map(h=>`<button type="button" class="time-btn" data-hour="${h}" onclick="pickTimeHour(${h})">${h}</button>`).join('');
+  document.getElementById('minuteGrid').innerHTML = [0,5,10,15,20,25,30,35,40,45,50,55]
+    .map(m=>`<button type="button" class="time-btn" data-minute="${m}" onclick="pickTimeMinute(${m})">${String(m).padStart(2,'0')}</button>`).join('');
+  document.getElementById('ampmGrid').innerHTML = ['AM','PM']
+    .map(p=>`<button type="button" class="time-btn" data-ampm="${p}" onclick="pickTimeAmPm('${p}')">${p}</button>`).join('');
+}
+function updateTimePickerSelection(){
+  document.querySelectorAll('#hourGrid .time-btn').forEach(b=>b.classList.toggle('selected', Number(b.dataset.hour)===timePickerState.hour));
+  document.querySelectorAll('#minuteGrid .time-btn').forEach(b=>b.classList.toggle('selected', Number(b.dataset.minute)===timePickerState.minute));
+  document.querySelectorAll('#ampmGrid .time-btn').forEach(b=>b.classList.toggle('selected', b.dataset.ampm===timePickerState.ampm));
+  const toggle = document.getElementById('timePickerToggle');
+  if(timePickerState.hour!=null && timePickerState.minute!=null && timePickerState.ampm){
+    let h24 = timePickerState.hour % 12;
+    if(timePickerState.ampm==='PM') h24 += 12;
+    const value = String(h24).padStart(2,'0')+':'+String(timePickerState.minute).padStart(2,'0');
+    document.getElementById('eventTimeValue').value = value;
+    toggle.textContent = '🕐 ' + formatTime12(value);
+  } else {
+    document.getElementById('eventTimeValue').value = '';
+    toggle.textContent = '🕐 Set a time (optional)';
+  }
+}
+function pickTimeHour(h){ timePickerState.hour=h; updateTimePickerSelection(); }
+function pickTimeMinute(m){ timePickerState.minute=m; updateTimePickerSelection(); }
+function pickTimeAmPm(p){ timePickerState.ampm=p; updateTimePickerSelection(); }
+function toggleTimePicker(){ document.getElementById('timePickerPanel').classList.toggle('hidden'); }
+function clearEventTime(){ timePickerState = {hour:null, minute:null, ampm:null}; updateTimePickerSelection(); }
+function setTimePickerFromValue(value24){
+  if(!value24){ timePickerState = {hour:null, minute:null, ampm:null}; return; }
+  const [hh,mm] = value24.split(':').map(Number);
+  timePickerState = { hour: (hh%12)||12, minute: mm, ampm: hh>=12?'PM':'AM' };
+}
+
+function openAddEventModal(dStr, editId){
+  const editing = events.find(e=>e.id===editId);
+  const labels = CALENDAR_LABELS[session.themeGroup] || CALENDAR_LABELS.other;
+  setTimePickerFromValue(editing ? editing.time : null);
+  const html = `<button class="close-x" onclick="closeModal()">✕</button><h2>${editing?'Edit calendar entry':'Add to calendar'}</h2>
+    <form onsubmit="submitEventForm(event, ${JSON.stringify(editId||'')})">
+      <div class="field"><label>Date</label><input type="date" name="date" value="${editing?editing.date:dStr}" required></div>
       <div class="field"><label>Type</label>
         <select name="type">
-          <option value="lesson">🎯 Training / lesson</option>
-          <option value="activity">⭐ Activity</option>
-          <option value="competition">🏆 Competition</option>
+          <option value="lesson" ${editing&&editing.type==='lesson'?'selected':''}>🎯 Training / lesson</option>
+          <option value="activity" ${editing&&editing.type==='activity'?'selected':''}>⭐ Activity</option>
+          <option value="competition" ${editing&&editing.type==='competition'?'selected':''}>🏆 Competition</option>
         </select>
       </div>
-      <div class="field"><label>Title</label><input type="text" name="title" placeholder="e.g. Ballet class" required></div>
-      <div class="field"><label>Time (optional)</label><input type="time" name="time"></div>
+      <div class="field"><label>Title</label><input type="text" name="title" placeholder="${labels.titlePlaceholder}" value="${editing?escapeHtml(editing.title):''}" required></div>
+      <div class="field">
+        <label>Time (optional)</label>
+        <button type="button" class="btn ghost small" id="timePickerToggle" onclick="toggleTimePicker()">🕐 ${editing&&editing.time?formatTime12(editing.time):'Set a time (optional)'}</button>
+        <input type="hidden" name="time" id="eventTimeValue" value="${editing&&editing.time?editing.time:''}">
+        <div id="timePickerPanel" class="time-picker-panel hidden">
+          <div class="time-picker-section"><div class="time-picker-label">Hour</div><div class="time-picker-grid" id="hourGrid"></div></div>
+          <div class="time-picker-section"><div class="time-picker-label">Minutes</div><div class="time-picker-grid" id="minuteGrid"></div></div>
+          <div class="time-picker-section"><div class="time-picker-label">AM / PM</div><div class="time-picker-grid time-picker-ampm" id="ampmGrid"></div></div>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button type="button" class="btn small" onclick="toggleTimePicker()">Done</button>
+            <button type="button" class="btn ghost small" onclick="clearEventTime()">Clear time</button>
+          </div>
+        </div>
+      </div>
       <div class="field" style="flex-direction:row;align-items:center;gap:8px">
-        <input type="checkbox" name="recurring" id="recurringCheck" style="width:auto">
+        <input type="checkbox" name="recurring" id="recurringCheck" style="width:auto" ${editing&&editing.recurring?'checked':''}>
         <label for="recurringCheck" style="font-weight:600">Repeats every week</label>
       </div>
       <button class="btn" type="submit">Save</button>
+      ${editing?`<button type="button" class="btn danger small" onclick="closeModal();deleteEvent('${editing.id}')">Delete</button>`:''}
     </form>`;
   openModal(html);
+  renderTimePickerGrids();
+  updateTimePickerSelection();
 }
 
-function submitEventForm(e){
+function submitEventForm(e, editId){
   e.preventDefault();
   const f = e.target;
   const dStr = f.date.value;
-  events.push({
-    id:newId(), date:dStr, type:f.type.value, title:f.title.value.trim(),
-    time:f.time.value, recurring: f.recurring.checked?'weekly':null,
-    weekday: f.recurring.checked ? parseDate(dStr).getDay() : null
-  });
+  if(editId){
+    const entry = events.find(ev=>ev.id===editId);
+    entry.date=dStr; entry.type=f.type.value; entry.title=f.title.value.trim();
+    entry.time=f.time.value; entry.recurring = f.recurring.checked?'weekly':null;
+    entry.weekday = f.recurring.checked ? parseDate(dStr).getDay() : null;
+  } else {
+    events.push({
+      id:newId(), date:dStr, type:f.type.value, title:f.title.value.trim(),
+      time:f.time.value, recurring: f.recurring.checked?'weekly':null,
+      weekday: f.recurring.checked ? parseDate(dStr).getDay() : null
+    });
+  }
   saveEvents();
   closeModal();
   renderCalendar();
@@ -1265,6 +1392,31 @@ function getTodaySummaryPhrase(){
   if(evs.length === 0) return "Today's a clear day - maybe time to relax, or catch up on your diary.";
   if(evs.length === 1) return `Today we've got ${evs[0].title}${evs[0].time ? ' at '+evs[0].time : ''} - make the most of it!`;
   return `Today we've got ${evs.length} things on the schedule - make the most of it!`;
+}
+const WEATHER_CODE_ICONS = {
+  0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
+  45:'🌫️', 48:'🌫️',
+  51:'🌦️', 53:'🌦️', 55:'🌦️', 56:'🌦️', 57:'🌦️',
+  61:'🌧️', 63:'🌧️', 65:'🌧️', 66:'🌧️', 67:'🌧️',
+  71:'🌨️', 73:'🌨️', 75:'🌨️', 77:'🌨️',
+  80:'🌦️', 81:'🌧️', 82:'⛈️',
+  85:'🌨️', 86:'🌨️',
+  95:'⛈️', 96:'⛈️', 99:'⛈️'
+};
+function loadWeather(){
+  if(!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    try{
+      const {latitude, longitude} = pos.coords;
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&temperature_unit=celsius`);
+      const data = await res.json();
+      const temp = Math.round(data.current.temperature_2m);
+      const icon = WEATHER_CODE_ICONS[data.current.weather_code] || '🌡️';
+      const el = document.getElementById('weatherLine');
+      el.textContent = `${icon} ${temp}°C where you are right now`;
+      el.classList.remove('hidden');
+    }catch(e){ /* weather is a nice-to-have, fail silently */ }
+  }, ()=>{ /* location denied - just skip it, no error shown */ }, {timeout:5000});
 }
 function getGreeting(){
   const hour = new Date().getHours();
@@ -1425,18 +1577,31 @@ function deleteDiaryEntry(id){
 function renderDiaryList(){
   const list = document.getElementById('diaryList');
   const sorted = [...diary].sort((a,b)=>b.date.localeCompare(a.date));
-  list.innerHTML = sorted.length ? sorted.map(d=>`
-    <div class="entry-card">
+  list.innerHTML = sorted.length ? sorted.map(d=>{
+    const text = d.text||'';
+    const preview = text.length>140 ? text.slice(0,140)+'…' : text;
+    return `
+    <div class="entry-card clickable-chip" role="button" tabindex="0" onclick="openDiaryDetail('${d.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDiaryDetail('${d.id}');}">
       <div class="entry-head">
         <span class="entry-date">${moodEmojiString(d)} ${niceDate(d.date)}</span>
-        <span class="entry-actions">
-          <button class="btn ghost small" onclick="editDiaryEntry('${d.id}')">Edit</button>
-          <button class="btn danger small" onclick="deleteDiaryEntry('${d.id}')">Delete</button>
-        </span>
       </div>
-      <p>${escapeHtml(d.text||'')}</p>
-      ${d.photo ? `<img class="entry-photo" src="${d.photo}" onclick="viewPhoto('${d.id}')">` : ''}
-    </div>`).join('') : '<p class="empty-note">No entries yet — write your first one above!</p>';
+      <p>${escapeHtml(preview)}</p>
+      ${d.photo ? `<img class="entry-photo" src="${d.photo}">` : ''}
+    </div>`;
+  }).join('') : '<p class="empty-note">No entries yet — write your first one above!</p>';
+}
+function openDiaryDetail(id){
+  const d = diary.find(x=>x.id===id);
+  if(!d) return;
+  openModal(`
+    <button class="close-x" onclick="closeModal()">✕</button>
+    <h2>${moodEmojiString(d)} ${niceDate(d.date)}</h2>
+    ${d.photo ? `<img class="full" src="${d.photo}" style="margin-bottom:10px">` : ''}
+    <p style="white-space:pre-wrap">${escapeHtml(d.text||'')}</p>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn small" onclick="closeModal();editDiaryEntry('${d.id}')">Edit</button>
+      <button class="btn danger small" onclick="closeModal();deleteDiaryEntry('${d.id}')">Delete</button>
+    </div>`);
 }
 function viewPhoto(id){
   const entry = diary.find(d=>d.id===id);
