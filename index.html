@@ -172,11 +172,14 @@ main{max-width:960px;margin:0 auto;padding:16px}
 .today-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  grid-auto-rows:1fr;
   gap:14px;
-  align-items:start;
+  align-items:stretch;
 }
-.today-grid .card{margin-bottom:0}
+.today-grid .card{margin-bottom:0;display:flex;flex-direction:column}
 .today-grid .tile{cursor:pointer;transition:transform .15s ease, box-shadow .15s ease}
+.today-grid .tile ul, .today-grid .tile p.empty-note, .today-grid .tile div.empty-note{flex:1}
+.today-grid .tile .btn{margin-top:auto}
 .today-grid .tile:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(169,143,224,0.24)}
 .today-grid .tile:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
 .btn{
@@ -204,10 +207,10 @@ main{max-width:960px;margin:0 auto;padding:16px}
 .field textarea{min-height:70px;resize:vertical}
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .row>.field{flex:1;min-width:140px}
-.mood-picker{display:flex;gap:6px}
+.mood-picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:6px}
 .mood-btn{
   font-size:1.5rem;background:var(--bg);border:2px solid var(--line);
-  border-radius:10px;padding:6px 10px;cursor:pointer;
+  border-radius:10px;padding:6px 4px;cursor:pointer;
 }
 .mood-btn.selected{border-color:var(--pink);background:var(--pink-light)}
 .empty-note{color:var(--ink-soft);font-style:italic;padding:8px 0}
@@ -238,11 +241,23 @@ main{max-width:960px;margin:0 auto;padding:16px}
 .cal-subnav{display:flex;gap:8px;justify-content:center;margin-bottom:10px;flex-wrap:wrap}
 .cal-nav{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px}
 .cal-nav-label{font-family:'Quicksand',sans-serif;font-weight:700;font-size:1.1rem;min-width:180px;text-align:center}
-.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-@media (max-width:700px){.week-grid{grid-template-columns:1fr}}
-.day-col{background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:8px;min-height:90px}
-.day-col.today{border-color:var(--pink)}
-.day-col-head{font-weight:700;font-size:.85rem;margin-bottom:4px;display:flex;justify-content:space-between}
+.week-list{display:flex;flex-direction:column;gap:6px}
+.week-row{
+  display:flex;align-items:center;gap:12px;
+  background:var(--bg);border:2px solid var(--line);border-radius:12px;padding:8px 12px;
+}
+.week-row.today{border-color:var(--pink);background:var(--pink-light)}
+.week-row-day{flex:0 0 56px;text-align:center;line-height:1.1}
+.week-row-day .dayname{display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-soft)}
+.week-row.today .week-row-day .dayname{color:var(--pink)}
+.week-row-day .daynum{display:block;font-size:1.3rem;font-weight:700}
+.week-row-events{flex:1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+.week-row-events .event-chip{margin:0}
+.week-row-actions{flex:0 0 auto}
+@media (max-width:600px){
+  .week-row{flex-wrap:wrap}
+  .week-row-actions{margin-left:auto}
+}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
 .month-cell{
   background:var(--bg);border:2px solid var(--line);border-radius:10px;
@@ -341,6 +356,8 @@ footer{
 
 /* Photo capture row (diary / achievements / messages) */
 .photo-input-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.photo-input-row input[type="file"]{display:none}
+.photo-filename{font-size:.8rem;color:var(--ink-soft);font-style:italic}
 
 /* Inbox tab helpers */
 .hint{font-size:.82rem;color:var(--ink-soft);margin:0 0 10px}
@@ -478,14 +495,8 @@ footer{
           </div>
         </div>
         <div class="field">
-          <label>How did it feel?</label>
-          <div class="mood-picker" id="moodPicker">
-            <button type="button" class="mood-btn" data-mood="1" onclick="pickMood(1)">😴</button>
-            <button type="button" class="mood-btn" data-mood="2" onclick="pickMood(2)">😐</button>
-            <button type="button" class="mood-btn" data-mood="3" onclick="pickMood(3)">🙂</button>
-            <button type="button" class="mood-btn" data-mood="4" onclick="pickMood(4)">😃</button>
-            <button type="button" class="mood-btn" data-mood="5" onclick="pickMood(5)">🤩</button>
-          </div>
+          <label>How did it feel? (pick as many as fit - e.g. nervous and excited)</label>
+          <div class="mood-picker" id="moodPicker"></div>
         </div>
         <div class="field">
           <label>What happened / how did it go?</label>
@@ -494,9 +505,11 @@ footer{
         <div class="field">
           <label>Add a photo (optional)</label>
           <div class="photo-input-row">
-            <input type="file" id="diaryPhoto" accept="image/*">
-            <input type="file" id="diaryPhotoCamera" accept="image/*" capture="environment" style="display:none">
+            <input type="file" id="diaryPhoto" accept="image/*" onchange="updatePhotoName('diaryPhotoName', this)">
+            <input type="file" id="diaryPhotoCamera" accept="image/*" capture="environment" onchange="updatePhotoName('diaryPhotoName', this)">
+            <button type="button" class="btn ghost small" onclick="document.getElementById('diaryPhoto').click()">📁 Choose file</button>
             <button type="button" class="btn ghost small" onclick="document.getElementById('diaryPhotoCamera').click()">📷 Take photo</button>
+            <span class="photo-filename" id="diaryPhotoName"></span>
           </div>
         </div>
         <button class="btn" type="submit">Save entry</button>
@@ -522,9 +535,11 @@ footer{
         <div class="field">
           <label>Add a photo (optional)</label>
           <div class="photo-input-row">
-            <input type="file" id="medalsPhoto" accept="image/*">
-            <input type="file" id="medalsPhotoCamera" accept="image/*" capture="environment" style="display:none">
+            <input type="file" id="medalsPhoto" accept="image/*" onchange="updatePhotoName('medalsPhotoName', this)">
+            <input type="file" id="medalsPhotoCamera" accept="image/*" capture="environment" onchange="updatePhotoName('medalsPhotoName', this)">
+            <button type="button" class="btn ghost small" onclick="document.getElementById('medalsPhoto').click()">📁 Choose file</button>
             <button type="button" class="btn ghost small" onclick="document.getElementById('medalsPhotoCamera').click()">📷 Take photo</button>
+            <span class="photo-filename" id="medalsPhotoName"></span>
           </div>
         </div>
         <button class="btn gold" type="submit">+ Add medal / result</button>
@@ -533,7 +548,7 @@ footer{
     </div>
 
     <div class="card">
-      <h2>⭐ New skills &amp; moves</h2>
+      <h2>⭐ Skills</h2>
       <form onsubmit="submitAchieveForm(event,'skills')">
         <div class="row">
           <div class="field"><label>Date</label><input type="date" name="date" required></div>
@@ -543,9 +558,11 @@ footer{
         <div class="field">
           <label>Add a photo (optional)</label>
           <div class="photo-input-row">
-            <input type="file" id="skillsPhoto" accept="image/*">
-            <input type="file" id="skillsPhotoCamera" accept="image/*" capture="environment" style="display:none">
+            <input type="file" id="skillsPhoto" accept="image/*" onchange="updatePhotoName('skillsPhotoName', this)">
+            <input type="file" id="skillsPhotoCamera" accept="image/*" capture="environment" onchange="updatePhotoName('skillsPhotoName', this)">
+            <button type="button" class="btn ghost small" onclick="document.getElementById('skillsPhoto').click()">📁 Choose file</button>
             <button type="button" class="btn ghost small" onclick="document.getElementById('skillsPhotoCamera').click()">📷 Take photo</button>
+            <span class="photo-filename" id="skillsPhotoName"></span>
           </div>
         </div>
         <button class="btn secondary" type="submit">+ Add skill</button>
@@ -554,20 +571,22 @@ footer{
     </div>
 
     <div class="card">
-      <h2>🎭 Performances &amp; recitals</h2>
+      <h2 id="performancesHeading">🎭 Performances &amp; recitals</h2>
       <form onsubmit="submitAchieveForm(event,'performances')">
         <div class="row">
           <div class="field"><label>Date</label><input type="date" name="date" required></div>
-          <div class="field"><label>Show name</label><input type="text" name="title" placeholder="e.g. Winter Recital" required></div>
-          <div class="field"><label>Role</label><input type="text" name="placement" placeholder="e.g. Snowflake"></div>
+          <div class="field"><label id="performancesTitleLabel">Show name</label><input type="text" name="title" id="performancesTitleInput" placeholder="e.g. Winter Recital" required></div>
+          <div class="field"><label id="performancesRoleLabel">Role</label><input type="text" name="placement" id="performancesRoleInput" placeholder="e.g. Snowflake"></div>
         </div>
         <div class="field"><label>Notes</label><textarea name="notes" placeholder="Any details worth remembering"></textarea></div>
         <div class="field">
           <label>Add a photo (optional)</label>
           <div class="photo-input-row">
-            <input type="file" id="performancesPhoto" accept="image/*">
-            <input type="file" id="performancesPhotoCamera" accept="image/*" capture="environment" style="display:none">
+            <input type="file" id="performancesPhoto" accept="image/*" onchange="updatePhotoName('performancesPhotoName', this)">
+            <input type="file" id="performancesPhotoCamera" accept="image/*" capture="environment" onchange="updatePhotoName('performancesPhotoName', this)">
+            <button type="button" class="btn ghost small" onclick="document.getElementById('performancesPhoto').click()">📁 Choose file</button>
             <button type="button" class="btn ghost small" onclick="document.getElementById('performancesPhotoCamera').click()">📷 Take photo</button>
+            <span class="photo-filename" id="performancesPhotoName"></span>
           </div>
         </div>
         <button class="btn" type="submit">+ Add performance</button>
@@ -625,9 +644,11 @@ footer{
       <div class="field">
         <label>Add a photo (optional)</label>
         <div class="photo-input-row">
-          <input type="file" id="messagePhoto" accept="image/*">
-          <input type="file" id="messagePhotoCamera" accept="image/*" capture="environment" style="display:none">
+          <input type="file" id="messagePhoto" accept="image/*" onchange="updatePhotoName('messagePhotoName', this)">
+          <input type="file" id="messagePhotoCamera" accept="image/*" capture="environment" onchange="updatePhotoName('messagePhotoName', this)">
+          <button type="button" class="btn ghost small" onclick="document.getElementById('messagePhoto').click()">📁 Choose file</button>
           <button type="button" class="btn ghost small" onclick="document.getElementById('messagePhotoCamera').click()">📷 Take photo</button>
+          <span class="photo-filename" id="messagePhotoName"></span>
         </div>
       </div>
       <button class="btn" onclick="sendMessage()">Send</button>
@@ -671,6 +692,28 @@ footer{
 const FIREBASE_API_KEY = 'AIzaSyATF3VNjzMWTj-sMzVuinZg3JnxMFbQVac';
 const FIREBASE_DB_URL = 'https://alltimediary-7223a-default-rtdb.europe-west1.firebasedatabase.app';
 const AUTH_EMAIL_SUFFIX = '@alltimediary.local';
+
+/* ---------- analytics (aggregate usage counts only - no personal content, ever) ----------
+   Fill in from Firebase Console > Project Settings > Data Streams (after enabling Analytics)
+   > your web stream > Measurement ID, and a Measurement Protocol API secret created there. ---------- */
+const GA_MEASUREMENT_ID = 'REPLACE_WITH_GA_MEASUREMENT_ID';
+const GA_API_SECRET = 'REPLACE_WITH_GA_API_SECRET';
+function analyticsClientId(){
+  let id = localStorage.getItem('alltime_ga_client_id');
+  if(!id){ id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+    const r = Math.random()*16|0; return (c==='x'?r:(r&0x3|0x8)).toString(16);
+  }); localStorage.setItem('alltime_ga_client_id', id); }
+  return id;
+}
+function logAnalyticsEvent(name, params){
+  if(!GA_MEASUREMENT_ID || GA_MEASUREMENT_ID.indexOf('REPLACE_')===0) return;
+  try{
+    fetch(`https://www.google-analytics.com/mp/collect?measurement_id=${GA_MEASUREMENT_ID}&api_secret=${GA_API_SECRET}`, {
+      method:'POST',
+      body: JSON.stringify({ client_id: analyticsClientId(), events: [{ name, params: params||{} }] })
+    }).catch(()=>{});
+  }catch(e){ /* analytics is best-effort, never blocks the app */ }
+}
 
 const ACTIVITIES = [
   {name:'Dance', group:'dance', icon:'💃'},
@@ -758,6 +801,10 @@ function saveEvents(){ localStorage.setItem(dataKey('events'), JSON.stringify(ev
 function saveDiary(){ localStorage.setItem(dataKey('diary'), JSON.stringify(diary)); markUpdatedAndSync(); }
 function saveAchievements(){ localStorage.setItem(dataKey('achievements'), JSON.stringify(achievements)); markUpdatedAndSync(); }
 function newId(){ return 'id'+Date.now()+Math.random().toString(16).slice(2); }
+function updatePhotoName(spanId, input){
+  const span = document.getElementById(spanId);
+  if(span) span.textContent = (input.files && input.files[0]) ? input.files[0].name : '';
+}
 function pickedPhotoFile(fileId, camId){
   const cam = document.getElementById(camId);
   const file = document.getElementById(fileId);
@@ -898,6 +945,7 @@ async function doSignup(){
     });
   }catch(e){ /* profile/username claim is best-effort over the network; local session still works */ }
   saveSession(newSession);
+  logAnalyticsEvent('sign_up', { activity: pendingActivity.name, theme_group: pendingActivity.group });
   enterApp();
 }
 
@@ -924,6 +972,7 @@ async function doLogin(){
     username, displayName: profile.displayName || username,
     activity: profile.activity || 'Other', themeGroup: profile.themeGroup || 'other'
   });
+  logAnalyticsEvent('login');
   enterApp();
 }
 
@@ -936,9 +985,29 @@ function doLogout(){
   }, 'Yes, log out');
 }
 
+function iconForActivity(activityName){
+  const match = ACTIVITIES.find(a => a.name === activityName);
+  return match ? match.icon : '⏱️';
+}
+const ACHIEVEMENT_EVENT_LABELS = {
+  dance:       { heading: '🎭 Performances & recitals', titleLabel: 'Show name', titlePlaceholder: 'e.g. Winter Recital', roleLabel: 'Role', rolePlaceholder: 'e.g. Snowflake' },
+  ballsports:  { heading: '🏆 Matches & tournaments',   titleLabel: 'Event name', titlePlaceholder: 'e.g. Club Championship', roleLabel: 'Result', rolePlaceholder: 'e.g. Won 3&2 / Shot 82' },
+  watersports: { heading: '🏆 Meets & competitions',    titleLabel: 'Event name', titlePlaceholder: 'e.g. County Swim Meet', roleLabel: 'Result', rolePlaceholder: 'e.g. Personal best time' },
+  athletics:   { heading: '🏆 Races & events',          titleLabel: 'Event name', titlePlaceholder: 'e.g. Local 10k', roleLabel: 'Result', rolePlaceholder: 'e.g. Personal best time' },
+  other:       { heading: '🏆 Events',                  titleLabel: 'Event name', titlePlaceholder: 'e.g. Club Open Day', roleLabel: 'Result', rolePlaceholder: 'e.g. Any details' }
+};
+function applyAchievementLabels(){
+  const labels = ACHIEVEMENT_EVENT_LABELS[session.themeGroup] || ACHIEVEMENT_EVENT_LABELS.other;
+  document.getElementById('performancesHeading').textContent = labels.heading;
+  document.getElementById('performancesTitleLabel').textContent = labels.titleLabel;
+  document.getElementById('performancesTitleInput').placeholder = labels.titlePlaceholder;
+  document.getElementById('performancesRoleLabel').textContent = labels.roleLabel;
+  document.getElementById('performancesRoleInput').placeholder = labels.rolePlaceholder;
+}
 function applyTheme(){
   document.documentElement.setAttribute('data-activity', session.themeGroup || 'other');
-  document.getElementById('appTitle').textContent = `⏱️ ${session.displayName}'s ${session.activity} Diary`;
+  document.getElementById('appTitle').textContent = `${iconForActivity(session.activity)} ${session.displayName}'s ${session.activity} Diary`;
+  applyAchievementLabels();
 }
 
 async function enterApp(){
@@ -1020,18 +1089,21 @@ function renderCalendar(){
     const monday = startOfWeek(anchorDate);
     const sunday = addDays(monday,6);
     label.textContent = monday.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' – ' + sunday.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
-    let html = '<div class="week-grid">';
+    let html = '<div class="week-list">';
     for(let i=0;i<7;i++){
       const d = addDays(monday,i);
       const dStr = fmtDate(d);
       const evs = getEventsForDate(dStr);
-      html += `<div class="day-col ${dStr===todayStr?'today':''}">
-        <div class="day-col-head"><span>${dayLabels[i]} ${d.getDate()}</span>${hasDiaryEntry(dStr)?'📖':''}</div>`;
-      if(evs.length===0) html += '<div class="empty-note" style="font-size:.75rem">—</div>';
+      const isToday = dStr===todayStr;
+      html += `<div class="week-row ${isToday?'today':''}">
+        <div class="week-row-day"><span class="dayname">${isToday?'Today':dayLabels[i]}</span><span class="daynum">${d.getDate()}</span></div>
+        <div class="week-row-events">`;
+      if(evs.length===0) html += '<span class="empty-note" style="padding:0;font-size:.85rem">Nothing planned</span>';
       evs.forEach(e=>{
-        html += `<div class="event-chip ${e.type}">${typeIcon[e.type]} ${escapeHtml(e.title)}<span class="time">${e.time||''}</span></div>`;
+        html += `<span class="event-chip ${e.type}">${typeIcon[e.type]} ${escapeHtml(e.title)}${e.time?'<span class="time">'+e.time+'</span>':''}</span>`;
       });
-      html += `<button class="btn ghost small" style="margin-top:4px" onclick="openDayDetail('${dStr}')">Details</button></div>`;
+      if(hasDiaryEntry(dStr)) html += '<span class="event-chip diary">📖 Diary</span>';
+      html += `</div><div class="week-row-actions"><button class="btn ghost small" onclick="openDayDetail('${dStr}')">Details</button></div></div>`;
     }
     html += '</div>';
     container.innerHTML = html;
@@ -1098,7 +1170,7 @@ function openDayDetail(dStr){
       <button class="btn danger small" style="margin-left:auto" onclick="deleteEvent('${e.id}')">✕</button></div>`;
   });
   if(dEntry){
-    html += `<div class="entry-card"><strong>Diary:</strong> ${moodEmoji(dEntry.mood)} ${escapeHtml(dEntry.text||'').slice(0,120)}</div>`;
+    html += `<div class="entry-card"><strong>Diary:</strong> ${moodEmojiString(dEntry)} ${escapeHtml(dEntry.text||'').slice(0,120)}</div>`;
   }
   html += `<div style="margin-top:10px"><button class="btn secondary small" onclick="closeModal();openAddEventModal('${dStr}')">+ Add event</button> <button class="btn small" onclick="closeModal();goToDiaryForDate('${dStr}')">📖 Diary entry</button></div>`;
   openModal(html);
@@ -1188,12 +1260,18 @@ const affirmations = [
   "Your hard work is turning into real magic! ✨",
   "Today is a great day to move! 💪"
 ];
+function getTodaySummaryPhrase(){
+  const evs = getEventsForDate(fmtDate(new Date()));
+  if(evs.length === 0) return "Today's a clear day - maybe time to relax, or catch up on your diary.";
+  if(evs.length === 1) return `Today we've got ${evs[0].title}${evs[0].time ? ' at '+evs[0].time : ''} - make the most of it!`;
+  return `Today we've got ${evs.length} things on the schedule - make the most of it!`;
+}
 function getGreeting(){
   const hour = new Date().getHours();
   const name = session ? session.displayName : 'there';
-  if(hour < 12) return `Good morning, ${name}. I hope you're looking forward to today!`;
-  if(hour < 17) return `Good afternoon, ${name}. I hope you're having a great day!`;
-  return `Good evening, ${name}. I hope you had a great day!`;
+  const dayPhrase = new Date().toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'});
+  const timeGreeting = hour<12 ? 'Good morning' : hour<17 ? 'Good afternoon' : 'Good evening';
+  return `${timeGreeting}, ${name}. It's ${dayPhrase}. ${getTodaySummaryPhrase()}`;
 }
 function renderToday(){
   document.getElementById('affirmation').textContent = affirmations[new Date().getDate() % affirmations.length];
@@ -1225,12 +1303,47 @@ function goToDiaryForDate(dStr){
 
 /* ---------- diary ---------- */
 document.getElementById('diaryDate').value = fmtDate(new Date());
-let selectedMood = null;
-function pickMood(m){
-  selectedMood = m;
-  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.toggle('selected', Number(b.dataset.mood)===m));
+const MOODS = [
+  {key:'happy', icon:'😊'},
+  {key:'excited', icon:'😃'},
+  {key:'proud', icon:'🥳'},
+  {key:'confident', icon:'💪'},
+  {key:'calm', icon:'😌'},
+  {key:'grateful', icon:'🙏'},
+  {key:'tired', icon:'😴'},
+  {key:'nervous', icon:'😰'},
+  {key:'anxious', icon:'😨'},
+  {key:'frustrated', icon:'😤'},
+  {key:'sad', icon:'😢'},
+  {key:'disappointed', icon:'😞'}
+];
+// Old entries stored a single mood as a number 1-5; kept here only to translate
+// old diary entries to the new multi-mood key format, never used for new entries.
+const LEGACY_MOOD_MAP = {1:'tired', 2:'calm', 3:'happy', 4:'excited', 5:'proud'};
+
+function renderMoodPicker(){
+  const el = document.getElementById('moodPicker');
+  el.innerHTML = MOODS.map(m=>`<button type="button" class="mood-btn" data-mood="${m.key}" onclick="toggleMood('${m.key}')">${m.icon}</button>`).join('');
 }
-function moodEmoji(m){ return ({1:'😴',2:'😐',3:'🙂',4:'😃',5:'🤩'})[m] || ''; }
+renderMoodPicker();
+
+let selectedMoods = [];
+function toggleMood(key){
+  const i = selectedMoods.indexOf(key);
+  if(i===-1) selectedMoods.push(key); else selectedMoods.splice(i,1);
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.toggle('selected', selectedMoods.includes(b.dataset.mood)));
+}
+function setSelectedMoods(keys){
+  selectedMoods = keys.slice();
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.toggle('selected', selectedMoods.includes(b.dataset.mood)));
+}
+function moodsForEntry(d){
+  if(Array.isArray(d.moods)) return d.moods;
+  if(d.mood && LEGACY_MOOD_MAP[d.mood]) return [LEGACY_MOOD_MAP[d.mood]];
+  return [];
+}
+function moodIcon(key){ const m = MOODS.find(x=>x.key===key); return m ? m.icon : ''; }
+function moodEmojiString(d){ return moodsForEntry(d).map(moodIcon).join(''); }
 
 function compressImage(file, maxDim, quality){
   return new Promise(resolve=>{
@@ -1268,9 +1381,10 @@ async function submitDiaryForm(e){
   }
   if(editId){
     const entry = diary.find(d=>d.id===editId);
-    entry.date=dStr; entry.mood=selectedMood; entry.text=text; entry.photo=photo;
+    entry.date=dStr; entry.moods=selectedMoods.slice(); delete entry.mood; entry.text=text; entry.photo=photo;
   } else {
-    diary.push({id:newId(), date:dStr, mood:selectedMood, text, photo});
+    diary.push({id:newId(), date:dStr, moods:selectedMoods.slice(), text, photo});
+    logAnalyticsEvent('diary_entry_added', { has_photo: !!photo });
   }
   saveDiary();
   resetDiaryForm();
@@ -1284,8 +1398,7 @@ function resetDiaryForm(){
   document.getElementById('diaryDate').value = fmtDate(new Date());
   document.getElementById('diaryEditId').value = '';
   document.getElementById('diaryFormTitle').textContent = 'New diary entry';
-  selectedMood = null;
-  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));
+  setSelectedMoods([]);
 }
 
 function editDiaryEntry(id){
@@ -1295,7 +1408,7 @@ function editDiaryEntry(id){
   document.getElementById('diaryDate').value = entry.date;
   document.getElementById('diaryText').value = entry.text || '';
   document.getElementById('diaryFormTitle').textContent = 'Edit diary entry';
-  pickMood(entry.mood);
+  setSelectedMoods(moodsForEntry(entry));
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
@@ -1315,7 +1428,7 @@ function renderDiaryList(){
   list.innerHTML = sorted.length ? sorted.map(d=>`
     <div class="entry-card">
       <div class="entry-head">
-        <span class="entry-date">${moodEmoji(d.mood)} ${niceDate(d.date)}</span>
+        <span class="entry-date">${moodEmojiString(d)} ${niceDate(d.date)}</span>
         <span class="entry-actions">
           <button class="btn ghost small" onclick="editDiaryEntry('${d.id}')">Edit</button>
           <button class="btn danger small" onclick="deleteDiaryEntry('${d.id}')">Delete</button>
@@ -1350,6 +1463,7 @@ async function submitAchieveForm(e, cat){
     notes: capitalizeSentences(f.notes.value.trim()),
     photo
   });
+  logAnalyticsEvent('achievement_added', { category: cat, has_photo: !!photo });
   saveAchievements();
   f.reset();
   renderAchievements();
@@ -1482,6 +1596,7 @@ async function sendFriendRequest(){
     });
     if(!putRes.ok){ errEl.textContent = 'Could not send request - they may have blocked you.'; return; }
     document.getElementById('addFriendUsername').value = '';
+    logAnalyticsEvent('friend_request_sent');
     notify('Request sent! They need to accept before you can message or share with each other.');
   }catch(e){ errEl.textContent = 'Something went wrong - check your connection and try again.'; }
 }
@@ -1520,6 +1635,7 @@ async function acceptFriendRequest(reqId, fromUid, fromName){
       method:'PUT', body: JSON.stringify({displayName: session.displayName, acceptedAt: Date.now()})
     });
     await fetch(`${FIREBASE_DB_URL}/friendRequests/${session.uid}/${reqId}.json?auth=${session.idToken}`, {method:'DELETE'});
+    logAnalyticsEvent('friend_request_accepted');
   }catch(e){}
   refreshInbox();
 }
@@ -1636,6 +1752,7 @@ async function shareItem(type, item, targetUid, targetName){
     const res = await fetch(`${FIREBASE_DB_URL}/shares/${targetUid}/${shareId}.json?auth=${session.idToken}`, {
       method:'PUT', body: JSON.stringify({fromUid: session.uid, fromName: session.displayName, type, item, sharedAt: Date.now()})
     });
+    if(res.ok) logAnalyticsEvent('share_sent', { type });
     notify(res.ok ? `Shared with ${targetName}!` : 'Could not share - are they in your Circle?');
   }catch(e){ notify('Something went wrong sharing this.'); }
 }
@@ -1710,9 +1827,11 @@ async function sendMessage(){
       method:'PUT', body: JSON.stringify({fromUid: session.uid, fromName: session.displayName, text, photo, sentAt: Date.now()})
     });
     if(!res.ok){ errEl.textContent = 'Could not send - are they still in your Circle?'; return; }
+    logAnalyticsEvent('message_sent', { has_photo: !!photo });
     document.getElementById('messageText').value = '';
     document.getElementById('messagePhoto').value = '';
     document.getElementById('messagePhotoCamera').value = '';
+    updatePhotoName('messagePhotoName', {files: []});
     updateMessageCounter();
     notify('Sent!');
   }catch(e){ errEl.textContent = 'Something went wrong sending this.'; }
