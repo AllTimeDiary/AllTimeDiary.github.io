@@ -467,6 +467,11 @@ footer{
       <div class="field"><label>What's your name?</label><input type="text" id="signupDisplayName"></div>
       <div class="field"><label>Date of birth</label><input type="date" id="signupDob"></div>
       <div class="field">
+        <label>Recovery email (optional)</label>
+        <input type="email" id="signupRecoveryEmail" placeholder="Only if you have one!">
+        <p class="hint" style="margin-top:2px">This is completely optional - it just helps us get you back into your account if you ever forget your PIN. Totally fine to leave blank if you don't have an email.</p>
+      </div>
+      <div class="field">
         <label>What do you do?</label>
         <div class="activity-grid" id="activityGrid"></div>
       </div>
@@ -994,6 +999,7 @@ async function doSignup(){
   const pin = document.getElementById('signupPin').value;
   const displayName = document.getElementById('signupDisplayName').value.trim();
   const dob = document.getElementById('signupDob').value;
+  const recoveryEmail = document.getElementById('signupRecoveryEmail').value.trim();
   const usResidentEl = document.querySelector('input[name="signupUsResident"]:checked');
   const usResident = usResidentEl ? usResidentEl.value : 'no';
 
@@ -1029,7 +1035,8 @@ async function doSignup(){
     await fetch(`${FIREBASE_DB_URL}/users/${uid}/profile.json?auth=${newSession.idToken}`, {method:'PUT', body: JSON.stringify({
       displayName, activity: pendingActivity.name, themeGroup: pendingActivity.group,
       createdAt: Date.now(), residencyDeclaredNonUS: true, residencyDeclaredAt: Date.now(),
-      isMinor, messagingConsentGranted: !isMinor
+      isMinor, messagingConsentGranted: !isMinor,
+      ...(recoveryEmail ? {recoveryEmail} : {})
     })});
     // Atomic server-side increment (Firebase ServerValue.increment) - avoids a race condition
     // if two people sign up at the same instant, unlike a read-then-write from the client.
