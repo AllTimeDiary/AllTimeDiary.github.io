@@ -2068,7 +2068,6 @@ function hideMessageOnBlur(){
 }
 
 /* ---------- inbox badge ---------- */
-const MAX_ACCOUNTS_PER_PARENT_EMAIL = 3;
 async function parentEmailKey(email){ return sha256Hex('e:'+email.trim().toLowerCase()); }
 
 const REPORT_EMAIL = 'hello.alltimediary@gmail.com';
@@ -2086,13 +2085,6 @@ async function requestParentConsent(){
   if(!(await ensureFreshToken())) return;
   const emailKey = await parentEmailKey(parentEmail);
   try{
-    const res = await fetch(`${FIREBASE_DB_URL}/parentConsents/${emailKey}.json?auth=${session.idToken}`);
-    const existing = (await res.json()) || {};
-    const alreadyCounted = !!existing[session.uid];
-    if(!alreadyCounted && Object.keys(existing).length >= MAX_ACCOUNTS_PER_PARENT_EMAIL){
-      notify("It looks like this email is already linked to the maximum number of AllTime accounts (3). If that doesn't sound right, please get in touch with us directly.");
-      return;
-    }
     await fetch(`${FIREBASE_DB_URL}/parentConsents/${emailKey}/${session.uid}.json?auth=${session.idToken}`, {
       method:'PUT', body: JSON.stringify(true)
     });
