@@ -2087,7 +2087,7 @@ async function renderInboxMessages(){
         </span>
       </div>
     </div>`;
-  }).join('') : '<p class="empty-hint">No messages.</p>';
+  }).join('') : '';
   return liveIds.length;
 }
 async function openMessage(id){
@@ -2098,7 +2098,9 @@ async function openMessage(id){
     msg = await res.json();
   }catch(e){ return; }
   if(!msg) return;
-  fetch(`${FIREBASE_DB_URL}/messages/${session.uid}/${id}.json?auth=${session.idToken}`, {method:'DELETE'}).catch(()=>{});
+  try{
+    await fetch(`${FIREBASE_DB_URL}/messages/${session.uid}/${id}.json?auth=${session.idToken}`, {method:'DELETE'});
+  }catch(e){ /* local UI still updates below even if the delete call itself failed to complete */ }
   openModal(`
     <button class="close-x" onclick="closeModal()">✕</button>
     <div class="message-view" id="messageView">
@@ -2109,7 +2111,7 @@ async function openMessage(id){
       <button type="button" class="btn small" style="margin-top:10px" onclick='replyToMessage(${JSON.stringify(msg.fromUid)}, ${JSON.stringify(msg.fromName)})'>↩️ Reply</button>
     </div>`);
   document.addEventListener('visibilitychange', hideMessageOnBlur);
-  renderInboxMessages();
+  refreshInbox();
 }
 function replyToMessage(fromUid, fromName){
   openModal(`
