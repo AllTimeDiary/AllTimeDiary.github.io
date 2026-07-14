@@ -631,27 +631,6 @@ footer{
     </div>
     <div id="inboxUnlocked">
     <div class="card">
-      <h2>🔵 Add to your Circle</h2>
-      <p class="hint">Ask your friend for their exact username, then enter it here. They'll need to accept before you're connected - nobody can find or message you unless you've both agreed.</p>
-      <div class="row">
-        <div class="field"><label>Their username</label><input type="text" id="addFriendUsername"></div>
-      </div>
-      <button class="btn" onclick="sendFriendRequest()">Send request</button>
-      <p class="auth-error" id="addFriendError"></p>
-    </div>
-
-    <div class="card">
-      <h2>📨 Requests</h2>
-      <div id="friendRequestsList"><p class="empty-hint">No pending requests.</p></div>
-    </div>
-
-    <div class="card">
-      <h2>⭐ Your Circle</h2>
-      <p class="hint">Star someone to move them into your Inner Circle. Only you can ever see this list.</p>
-      <div id="friendsList"><p class="empty-hint">Your Circle is empty - send a request above to add someone.</p></div>
-    </div>
-
-    <div class="card">
       <h2>💬 Messages</h2>
       <p class="hint">Short messages only (200 characters). Not saved anywhere - deleted the moment they're read, and automatically after 24 hours if unread.</p>
       <div class="row">
@@ -678,6 +657,27 @@ footer{
       <p class="message-disclaimer">Sent once, read once, never saved - gone in 24h if unread. Messages can't be guaranteed screenshot-proof - don't send anything you wouldn't want kept.</p>
       <p class="auth-error" id="messageError"></p>
       <div id="messagesList" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card">
+      <h2>🔵 Add to your Circle</h2>
+      <p class="hint">Ask your friend for their exact username, then enter it here. They'll need to accept before you're connected - nobody can find or message you unless you've both agreed.</p>
+      <div class="row">
+        <div class="field"><label>Their username</label><input type="text" id="addFriendUsername"></div>
+      </div>
+      <button class="btn" onclick="sendFriendRequest()">Send request</button>
+      <p class="auth-error" id="addFriendError"></p>
+    </div>
+
+    <div class="card">
+      <h2>📨 Requests</h2>
+      <div id="friendRequestsList"><p class="empty-hint">No pending requests.</p></div>
+    </div>
+
+    <div class="card">
+      <h2>⭐ Your Circle</h2>
+      <p class="hint">Star someone to move them into your Inner Circle. Only you can ever see this list.</p>
+      <div id="friendsList"><p class="empty-hint">Your Circle is empty - send a request above to add someone.</p></div>
     </div>
 
     <div class="card">
@@ -2028,13 +2028,12 @@ async function renderInboxMessages(){
     const hoursLeft = Math.max(0, Math.round(24 - (now - m.sentAt)/(60*60*1000)));
     return `<div class="entry-card message-preview" onclick="openMessage('${id}')">
       <div class="entry-head">
-        <span><strong>${escapeHtml(m.fromName)}</strong></span>
+        <span>💌 <strong>${escapeHtml(m.fromName)}</strong> <span class="empty-note" style="font-style:normal;padding:0">- tap to read</span></span>
         <span class="entry-actions">
           <span class="empty-note" style="font-style:normal;padding:0">expires in ~${hoursLeft}h</span>
           <button class="btn ghost small" onclick='event.stopPropagation(); reportUser(${JSON.stringify(m.fromName)})'>🚩 Report</button>
         </span>
       </div>
-      <p>${m.photo ? '📷 Photo message - tap to view' : escapeHtml(m.text.length>60 ? m.text.slice(0,60)+'…' : m.text)}</p>
     </div>`;
   }).join('') : '<p class="empty-hint">No messages.</p>';
   return liveIds.length;
