@@ -198,6 +198,11 @@ main{max-width:960px;margin:0 auto;padding:16px}
 .today-grid .tile .btn{margin-top:auto}
 .tile:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(169,143,224,0.24)}
 .tile:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
+.discover-banner{
+  background:linear-gradient(120deg,var(--gold-light) 0%,var(--pink-light) 100%);
+  border:2px solid var(--gold);
+  margin-bottom:16px;
+}
 .discover-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;align-items:start}
 .discover-grid .card{margin:0}
 .feature-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}
@@ -729,6 +734,32 @@ footer{
   </section>
 
   <section id="tab-discover" class="tab-panel">
+    <div class="card discover-banner">
+      <h2>💰 Money Skills</h2>
+      <p class="hint" style="margin-top:0">Free, reputable places to learn about money - never paywalled, never selling anything. A genuinely useful life skill for any age.</p>
+      <div class="feature-links">
+        <a class="feature-link-card" href="https://ftflic.com/" target="_blank" rel="noopener" onclick="return handleDiscoverLink(event, this.href)">
+          <strong>📰 FT FLIC</strong>
+          <span>The Financial Times' free financial literacy programme for young people</span>
+        </a>
+        <a class="feature-link-card" href="https://www.moneysavingexpert.com/family/financial-education/" target="_blank" rel="noopener" onclick="return handleDiscoverLink(event, this.href)">
+          <strong>💡 MoneySavingExpert</strong>
+          <span>Martin Lewis's free financial education hub</span>
+        </a>
+        <a class="feature-link-card" href="https://themoneycharity.org.uk/" target="_blank" rel="noopener" onclick="return handleDiscoverLink(event, this.href)">
+          <strong>🤝 The Money Charity</strong>
+          <span>A UK non-profit dedicated to financial wellbeing education</span>
+        </a>
+        <a class="feature-link-card" href="https://www.young-enterprise.org.uk/what-we-do/resources" target="_blank" rel="noopener" onclick="return handleDiscoverLink(event, this.href)">
+          <strong>🎓 Young Money</strong>
+          <span>Free resources for 14-16s: spending, debt, student finance, and more</span>
+        </a>
+        <a class="feature-link-card" href="https://www.moneyhelper.org.uk/en/family-and-care/student-and-graduate-money/supporting-yourself-financially-a-guide-for-young-adults-aged-16-to-24" target="_blank" rel="noopener" onclick="return handleDiscoverLink(event, this.href)">
+          <strong>🧭 MoneyHelper</strong>
+          <span>The UK government's free guide to financial independence for 16-24s</span>
+        </a>
+      </div>
+    </div>
     <div class="discover-grid">
     <div class="card">
       <h2>⚽ Football</h2>
@@ -821,24 +852,6 @@ footer{
         <a class="feature-link-card" href="https://www.wtatennis.com/rankings" target="_blank" rel="noopener" onclick="return handleDiscoverLink(event, this.href)">
           <strong>🏆 WTA Rankings</strong>
           <span>Official women's tour rankings</span>
-        </a>
-      </div>
-    </div>
-    <div class="card">
-      <h2>💰 Money Skills</h2>
-      <p class="hint" style="margin-top:0">Free, reputable places to learn about money - never paywalled, never selling anything.</p>
-      <div class="feature-links">
-        <a class="feature-link-card" href="https://ftflic.com/" target="_blank" rel="noopener" onclick="return handleDiscoverLink(event, this.href)">
-          <strong>📰 FT FLIC</strong>
-          <span>The Financial Times' free financial literacy programme for young people</span>
-        </a>
-        <a class="feature-link-card" href="https://www.moneysavingexpert.com/family/financial-education/" target="_blank" rel="noopener" onclick="return handleDiscoverLink(event, this.href)">
-          <strong>💡 MoneySavingExpert</strong>
-          <span>Martin Lewis's free financial education hub</span>
-        </a>
-        <a class="feature-link-card" href="https://themoneycharity.org.uk/" target="_blank" rel="noopener" onclick="return handleDiscoverLink(event, this.href)">
-          <strong>🤝 The Money Charity</strong>
-          <span>A UK non-profit dedicated to financial wellbeing education</span>
         </a>
       </div>
     </div>
