@@ -343,6 +343,14 @@ footer{
 #inboxLocked h2{color:var(--ink)}
 #inboxLocked p{margin:0 0 10px}
 
+/* Collapsible message-compose section (list stays on top, form tucked away) */
+.compose-details{margin-top:12px}
+.compose-summary{
+  display:inline-block;cursor:pointer;list-style:none;user-select:none;
+}
+.compose-summary::-webkit-details-marker{display:none}
+.compose-summary::marker{content:''}
+
 /* Clickable entries inside modals (day detail, diary) */
 .clickable-chip{cursor:pointer;transition:transform .12s ease}
 .clickable-chip:hover{transform:translateY(-1px)}
@@ -636,30 +644,33 @@ footer{
     <div class="card">
       <h2>💬 Messages</h2>
       <p class="hint">Short messages only (200 characters). Not saved anywhere - deleted the moment they're read, and automatically after 24 hours if unread.</p>
-      <div class="row">
+      <div id="messagesList"></div>
+      <details class="compose-details">
+        <summary class="btn secondary small compose-summary">✏️ Send a new message</summary>
+        <div class="row" style="margin-top:12px">
+          <div class="field">
+            <label>Send to</label>
+            <select id="messageRecipient"><option value="">Choose someone from your Circle...</option></select>
+          </div>
+        </div>
         <div class="field">
-          <label>Send to</label>
-          <select id="messageRecipient"><option value="">Choose someone from your Circle...</option></select>
+          <textarea id="messageText" maxlength="200" placeholder="Say something short..." oninput="updateMessageCounter()"></textarea>
+          <div class="message-counter" id="messageCounter">200 characters left</div>
         </div>
-      </div>
-      <div class="field">
-        <textarea id="messageText" maxlength="200" placeholder="Say something short..." oninput="updateMessageCounter()"></textarea>
-        <div class="message-counter" id="messageCounter">200 characters left</div>
-      </div>
-      <div class="field">
-        <label>Add a photo (optional)</label>
-        <div class="photo-input-row">
-          <input type="file" id="messagePhoto" accept="image/*" onchange="updatePhotoName('messagePhotoName', this)">
-          <input type="file" id="messagePhotoCamera" accept="image/*" capture="environment" onchange="updatePhotoName('messagePhotoName', this)">
-          <button type="button" class="btn ghost small" onclick="document.getElementById('messagePhoto').click()">📁 Choose file</button>
-          <button type="button" class="btn ghost small" onclick="document.getElementById('messagePhotoCamera').click()">📷 Take photo</button>
-          <span class="photo-filename" id="messagePhotoName"></span>
+        <div class="field">
+          <label>Add a photo (optional)</label>
+          <div class="photo-input-row">
+            <input type="file" id="messagePhoto" accept="image/*" onchange="updatePhotoName('messagePhotoName', this)">
+            <input type="file" id="messagePhotoCamera" accept="image/*" capture="environment" onchange="updatePhotoName('messagePhotoName', this)">
+            <button type="button" class="btn ghost small" onclick="document.getElementById('messagePhoto').click()">📁 Choose file</button>
+            <button type="button" class="btn ghost small" onclick="document.getElementById('messagePhotoCamera').click()">📷 Take photo</button>
+            <span class="photo-filename" id="messagePhotoName"></span>
+          </div>
         </div>
-      </div>
-      <button class="btn" onclick="sendMessage()">Send</button>
-      <p class="message-disclaimer">Sent once, read once, never saved - gone in 24h if unread. Messages can't be guaranteed screenshot-proof - don't send anything you wouldn't want kept.</p>
-      <p class="auth-error" id="messageError"></p>
-      <div id="messagesList" style="margin-top:14px"></div>
+        <button class="btn" onclick="sendMessage()">Send</button>
+        <p class="message-disclaimer">Sent once, read once, never saved - gone in 24h if unread. Messages can't be guaranteed screenshot-proof - don't send anything you wouldn't want kept.</p>
+        <p class="auth-error" id="messageError"></p>
+      </details>
     </div>
 
     <div class="card">
