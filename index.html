@@ -2055,9 +2055,17 @@ async function openMessage(id){
       ${msg.photo ? `<img class="full" src="${msg.photo}">` : ''}
       ${msg.text ? `<p class="message-body">${escapeHtml(msg.text)}</p>` : ''}
       <p class="message-gone-note">This message is already gone - it can't be reopened.</p>
+      <button type="button" class="btn small" style="margin-top:10px" onclick='closeModal();replyToMessage(${JSON.stringify(msg.fromUid)})'>↩️ Reply</button>
     </div>`);
   document.addEventListener('visibilitychange', hideMessageOnBlur);
   renderInboxMessages();
+}
+async function replyToMessage(fromUid){
+  switchTab('inbox');
+  await refreshInbox();
+  const select = document.getElementById('messageRecipient');
+  if(select) select.value = fromUid;
+  document.getElementById('messageText').focus();
 }
 function hideMessageOnBlur(){
   if(document.hidden){
