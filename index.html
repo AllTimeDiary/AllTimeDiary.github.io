@@ -1326,7 +1326,7 @@ function openAddEventModal(dStr, editId){
   const labels = CALENDAR_LABELS[session.themeGroup] || CALENDAR_LABELS.other;
   setTimePickerFromValue(editing ? editing.time : null);
   const html = `<button class="close-x" onclick="closeModal()">✕</button><h2>${editing?'Edit calendar entry':'Add to calendar'}</h2>
-    <form onsubmit="submitEventForm(event, ${JSON.stringify(editId||'')})">
+    <form onsubmit='submitEventForm(event, ${JSON.stringify(editId||"")})'>
       <div class="field"><label>Date</label><input type="date" name="date" value="${editing?editing.date:dStr}" required></div>
       <div class="field"><label>Type</label>
         <select name="type">
