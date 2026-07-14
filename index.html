@@ -2084,23 +2084,17 @@ async function requestParentConsent(){
   if(!parentEmail){ notify('Please enter a parent or guardian\'s email first.'); return; }
   if(!(await ensureFreshToken())) return;
   const emailKey = await parentEmailKey(parentEmail);
-  let currentCount = 0;
   try{
     const res = await fetch(`${FIREBASE_DB_URL}/parentConsents/${emailKey}.json?auth=${session.idToken}`);
-    currentCount = (await res.json()) || 0;
-  }catch(e){ /* if we can't check, fall through and let the write itself enforce the cap */ }
-  if(currentCount >= MAX_ACCOUNTS_PER_PARENT_EMAIL){
-    notify("It looks like this email is already linked to the maximum number of AllTime accounts (3). If that doesn't sound right, please get in touch with us directly.");
-    return;
-  }
-  try{
-    const putRes = await fetch(`${FIREBASE_DB_URL}/parentConsents/${emailKey}.json?auth=${session.idToken}`, {
-      method:'PUT', body: JSON.stringify(currentCount + 1)
-    });
-    if(!putRes.ok){
+    const existing = (await res.json()) || {};
+    const alreadyCounted = !!existing[session.uid];
+    if(!alreadyCounted && Object.keys(existing).length >= MAX_ACCOUNTS_PER_PARENT_EMAIL){
       notify("It looks like this email is already linked to the maximum number of AllTime accounts (3). If that doesn't sound right, please get in touch with us directly.");
       return;
     }
+    await fetch(`${FIREBASE_DB_URL}/parentConsents/${emailKey}/${session.uid}.json?auth=${session.idToken}`, {
+      method:'PUT', body: JSON.stringify(true)
+    });
   }catch(e){ notify('Something went wrong - check your connection and try again.'); return; }
 
   const subject = "A note from Ocean about AllTime";
@@ -2109,7 +2103,26 @@ async function requestParentConsent(){
     + "Here's what matters most to me: we don't save messages. Once one's read, it's gone for good - not stored, not backed up, not visible to anyone, not even me. If it's never opened, it disappears by itself within 24 hours anyway. Diaries, calendars and achievements are kept completely separate and are never affected either way.\n\n"
     + "I wanted AllTime to be a genuinely safe, private place - not somewhere that sells ads or collects data. If you're comfortable with this, just reply to this email to say yes. Thank you! 💛";
   window.location.href = `mailto:${encodeURIComponent(parentEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  notify("Your email app should open with the note ready to send. Once a parent replies, we'll unlock messaging here - no need to do anything else in the meantime!");
+
+  // Guaranteed fallback: if no email app opened (or the parent uses webmail), the
+  // full message is right here to copy - this doesn't depend on the device having
+  // any email app configured at all.
+  openModal(`
+    <button class="close-x" onclick="closeModal()">✕</button>
+    <h2>📋 Your note is ready</h2>
+    <p>Your email app may have opened in another tab or window - if it did, just press <strong>Send</strong> there.</p>
+    <p>If nothing opened, no problem - copy the message below and paste it into an email to <strong>${escapeHtml(parentEmail)}</strong> yourself (Gmail, Outlook, or whatever you use):</p>
+    <textarea id="consentFallbackText" readonly style="width:100%;min-height:160px;font-family:inherit">${subject}\n\n${body}</textarea>
+    <button type="button" class="btn small" style="margin-top:8px" onclick="copyConsentText()">📋 Copy message</button>
+    <p class="hint" style="margin-top:10px">Once a parent replies saying yes, we'll unlock messaging here - no need to do anything else in the meantime.</p>
+  `);
+}
+function copyConsentText(){
+  const ta = document.getElementById('consentFallbackText');
+  ta.select();
+  navigator.clipboard.writeText(ta.value).then(()=>notify('Copied! Paste it into your email.')).catch(()=>{
+    document.execCommand('copy'); notify('Copied! Paste it into your email.');
+  });
 }
 
 async function refreshInbox(){
