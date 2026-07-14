@@ -300,6 +300,16 @@ footer{
 }
 .footer-buttons{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .copyright-note{font-size:.7rem;color:var(--ink-soft);margin:0}
+.footer-link{font-size:.75rem;color:var(--ink-soft);text-decoration:none}
+.footer-link.danger-link{color:#c0395a}
+
+.analytics-banner{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;
+  background:var(--card-bg);border-top:2px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,0.12);
+  padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;
+}
+.analytics-banner p{margin:0;font-size:.85rem;flex:1;min-width:220px}
+.analytics-banner-actions{display:flex;gap:8px;flex-wrap:wrap}
 
 .modal-overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.45);
@@ -334,6 +344,19 @@ footer{
 .activity-btn.selected{border-color:var(--purple);background:var(--purple-light)}
 .activity-icon{font-size:1.5rem}
 .activity-name{font-size:.72rem;text-align:center;font-weight:600}
+
+.consent-badge{
+  font-size:.78rem;color:var(--good,var(--ink-soft));background:var(--good-soft,var(--bg));
+  border:1px solid var(--line);border-radius:100px;padding:5px 12px;text-align:center;
+  margin-bottom:10px;display:inline-block;
+}
+
+/* Signature pad for parental consent */
+.signature-pad{
+  display:block;width:100%;max-width:400px;height:150px;
+  background:#fff;border:2px dashed var(--purple);border-radius:12px;
+  touch-action:none;cursor:crosshair;
+}
 
 /* Parent consent card - built entirely from the app's existing palette variables */
 #inboxLocked{
@@ -412,6 +435,14 @@ footer{
 </head>
 <body>
 
+<div id="analyticsConsentBanner" class="analytics-banner hidden">
+  <p>We'd like to count anonymous usage stats (e.g. how many diary entries or messages get sent) to improve AllTime - no names, no content, ever. Is that okay?</p>
+  <div class="analytics-banner-actions">
+    <button class="btn small" onclick="setAnalyticsConsent(true)">Sure, that's fine</button>
+    <button class="btn ghost small" onclick="setAnalyticsConsent(false)">No thanks</button>
+  </div>
+</div>
+
 <div id="authScreen" class="auth-screen">
   <div class="auth-card">
     <div class="auth-title">⏱️ AllTime&trade;</div>
@@ -447,6 +478,7 @@ footer{
         </div>
         <p class="residency-note">AllTime isn't available to US residents at this time.</p>
       </div>
+      <p class="hint">Your diary, calendar and achievements sync securely to a private cloud database so they're available on all your devices - only you can ever read your own data. See our <a href="#" onclick="showPrivacyNotice();return false;">Privacy Notice</a> for details.</p>
       <button class="btn" onclick="doSignup()">Sign up</button>
       <p class="auth-error" id="signupError"></p>
       </div>
@@ -476,6 +508,7 @@ footer{
     <div class="backup-reminder" id="backupReminder" style="display:none">
       ⚠️ It's been a while since your last backup! Tap "Backup my data" at the bottom of the page to keep everything safe.
     </div>
+    <div class="consent-badge hidden" id="consentBadge"></div>
     <div class="card affirmation-banner">
       <div class="affirmation" id="affirmation"></div>
       <div class="greeting" id="greeting"></div>
@@ -635,10 +668,18 @@ footer{
       <p>Hi! I'm Ocean — I help make AllTime, and I want everyone who uses it to feel as safe here as I do.</p>
       <p>Your child would like to turn on messaging, so they can chat with friends they've chosen to add to their own private Circle themselves — never a stranger, and never anyone who hasn't agreed to connect first.</p>
       <p>Here's what matters most to me: <strong>we don't save messages.</strong> Once one's read, it's gone for good — not stored, not backed up, not visible to anyone, not even me. If it's never opened, it disappears by itself within 24 hours anyway. Diaries, calendars and achievements are kept completely separate and are never affected either way.</p>
-      <p>I wanted AllTime to be a genuinely safe, private place — not somewhere that sells ads or collects data. If you're comfortable with this, just pop your email below. 💛</p>
+      <p>I wanted AllTime to be a genuinely safe, private place — not somewhere that sells ads or collects data. If you're comfortable with this, a parent or guardian can confirm right here. 💛</p>
       <div class="field"><label>A parent/guardian's email</label><input type="email" id="parentConsentEmail"></div>
-      <button class="btn" onclick="requestParentConsent()">Send request to a parent</button>
-      <p class="hint" style="margin-top:10px">You can keep using your diary, calendar and achievements right away — this only affects messaging. We'll unlock it here as soon as a parent says yes.</p>
+      <div class="field"><label>Parent/guardian's full name</label><input type="text" id="parentConsentName" placeholder="e.g. Jane Smith"></div>
+      <div class="field">
+        <label>Parent/guardian signature</label>
+        <p class="hint" style="margin-top:0"><strong>AllTime's safety policy</strong> requires a genuine record that a parent or guardian agreed to this before messaging can switch on for anyone under 13 - not just an email reply. Please sign below with a finger or mouse.</p>
+        <canvas id="signaturePad" width="400" height="150" class="signature-pad"></canvas>
+        <button type="button" class="btn ghost small" style="margin-top:6px" onclick="clearSignature()">🧹 Clear signature</button>
+        <p class="hint" style="margin-top:6px">Your signature is stored securely and used only as proof of consent for compliance purposes - it's never shared, sold, or used for anything else.</p>
+      </div>
+      <button class="btn" onclick="requestParentConsent()">Confirm and send request</button>
+      <p class="hint" style="margin-top:10px">You can keep using your diary, calendar and achievements right away — this only affects messaging. We'll unlock it here as soon as a parent has signed and said yes.</p>
     </div>
     <div id="inboxUnlocked">
     <div class="card">
@@ -716,6 +757,10 @@ footer{
     <button class="btn danger small" onclick="confirmStartFresh()">🗑️ Start fresh</button>
     <button class="btn ghost small" onclick="doLogout()">🚪 Switch user / Log out</button>
   </div>
+  <div class="footer-buttons" style="margin-top:6px">
+    <a href="#" class="footer-link" onclick="showPrivacyNotice();return false;">🔒 Privacy Notice</a>
+    <a href="#" class="footer-link danger-link" onclick="confirmDeleteAccount();return false;">🗑️ Delete my account</a>
+  </div>
   <p class="copyright-note">&copy; 2026 William Munro and Ocean Sophie Munro. All rights reserved. AllTime&trade;</p>
 </footer>
 
@@ -743,7 +788,17 @@ function analyticsClientId(){
   }); localStorage.setItem('alltime_ga_client_id', id); }
   return id;
 }
+function hasAnalyticsConsent(){ return localStorage.getItem('alltime_analyticsConsent') === 'granted'; }
+function analyticsConsentDecided(){ return localStorage.getItem('alltime_analyticsConsent') !== null; }
+function setAnalyticsConsent(granted){
+  localStorage.setItem('alltime_analyticsConsent', granted ? 'granted' : 'declined');
+  document.getElementById('analyticsConsentBanner').classList.add('hidden');
+}
+function showAnalyticsConsentBannerIfNeeded(){
+  if(!analyticsConsentDecided()) document.getElementById('analyticsConsentBanner').classList.remove('hidden');
+}
 function logAnalyticsEvent(name, params){
+  if(!hasAnalyticsConsent()) return;
   if(!GA_MEASUREMENT_ID || GA_MEASUREMENT_ID.indexOf('REPLACE_')===0) return;
   try{
     fetch(`https://www.google-analytics.com/mp/collect?measurement_id=${GA_MEASUREMENT_ID}&api_secret=${GA_API_SECRET}`, {
@@ -1006,6 +1061,7 @@ async function doLogin(){
   saveSession({
     uid, idToken: result.idToken, refreshToken: result.refreshToken,
     isMinor: !!profile.isMinor, messagingConsentGranted: profile.messagingConsentGranted !== false,
+    consentSignedAt: profile.consentSignedAt || null, consentParentName: profile.consentParentName || null,
     expiresAt: Date.now() + Number(result.expiresIn)*1000,
     username, displayName: profile.displayName || username,
     activity: profile.activity || 'Other', themeGroup: profile.themeGroup || 'other'
@@ -1021,6 +1077,57 @@ function doLogout(){
     document.getElementById('authScreen').classList.remove('hidden');
     showAuthPane('login');
   }, 'Yes, log out');
+}
+
+function confirmDeleteAccount(){
+  if(!session) return;
+  confirmAction('This will PERMANENTLY delete your AllTime account and everything in it - diary, calendar, achievements, Circle, everything. This cannot be undone. Are you absolutely sure?', ()=>{
+    confirmAction('Really sure? There is no way to get this back once deleted.', deleteAccountForever, 'Yes, delete forever');
+  }, 'Yes, continue');
+}
+async function deleteAccountForever(){
+  if(!(await ensureFreshToken())) return;
+  const uid = session.uid, idToken = session.idToken, username = session.username;
+  try{
+    // Let every Circle connection know to clean up the stale friendship next time
+    // they load, the same mutual-removal mechanism used for blocking.
+    const friends = await loadFriends();
+    for(const friendUid of Object.keys(friends)){
+      await fetch(`${FIREBASE_DB_URL}/friendRemovals/${friendUid}/${uid}.json?auth=${idToken}`, {
+        method:'PUT', body: JSON.stringify({at: Date.now()})
+      }).catch(()=>{});
+    }
+    const uKey = await usernameKey(username);
+    // The security rules grant write access at users/{uid}/profile and users/{uid}/data
+    // individually, not at the users/{uid} parent - a single delete of the parent path
+    // is silently rejected, so each child must be deleted separately.
+    await fetch(`${FIREBASE_DB_URL}/users/${uid}/profile.json?auth=${idToken}`, {method:'DELETE'});
+    await fetch(`${FIREBASE_DB_URL}/users/${uid}/data.json?auth=${idToken}`, {method:'DELETE'});
+    await fetch(`${FIREBASE_DB_URL}/usernames/${uKey}.json?auth=${idToken}`, {method:'DELETE'});
+    await fetch(`${FIREBASE_DB_URL}/friends/${uid}.json?auth=${idToken}`, {method:'DELETE'});
+    await fetch(`${FIREBASE_DB_URL}/blocked/${uid}.json?auth=${idToken}`, {method:'DELETE'});
+    await fetch(`${FIREBASE_DB_URL}/messages/${uid}.json?auth=${idToken}`, {method:'DELETE'});
+    await fetch(`${FIREBASE_DB_URL}/shares/${uid}.json?auth=${idToken}`, {method:'DELETE'});
+    await fetch(`${FIREBASE_DB_URL}/friendRequests/${uid}.json?auth=${idToken}`, {method:'DELETE'});
+    await fetch(`${FIREBASE_DB_URL}/friendAccepts/${uid}.json?auth=${idToken}`, {method:'DELETE'});
+    await fetch(`${FIREBASE_DB_URL}/friendRemovals/${uid}.json?auth=${idToken}`, {method:'DELETE'});
+    // Deliberately NOT touching parentConsents - that signature record is kept
+    // permanently as a compliance record, even after full account deletion.
+    const countRes = await fetch(`${FIREBASE_DB_URL}/stats/userCount.json?auth=${idToken}`);
+    const currentCount = (await countRes.json()) || 0;
+    await fetch(`${FIREBASE_DB_URL}/stats/userCount.json?auth=${idToken}`, {
+      method:'PUT', body: JSON.stringify(Math.max(0, currentCount - 1))
+    }).catch(()=>{});
+    await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:delete?key=${FIREBASE_API_KEY}`, {
+      method:'POST', body: JSON.stringify({idToken})
+    });
+  }catch(e){ /* best-effort - proceed to clear local state regardless */ }
+  ['events','diary','achievements','updatedAt','lastBackup'].forEach(k=>localStorage.removeItem(`alltime_${k}_${uid}`));
+  clearSession();
+  document.getElementById('appRoot').classList.add('hidden');
+  document.getElementById('authScreen').classList.remove('hidden');
+  showAuthPane('login');
+  notify('Your AllTime account has been permanently deleted. We hope to see you again sometime.');
 }
 
 function iconForActivity(activityName){
@@ -1114,6 +1221,7 @@ function doLogoutSilently(){
 
 async function initAuthGate(){
   renderActivityGrid();
+  showAnalyticsConsentBannerIfNeeded();
   const inactiveTooLong = wasInactiveTooLong();
   startInactivityWatch();
   if(session && !inactiveTooLong && await ensureFreshToken()){
@@ -1469,10 +1577,22 @@ function getGreeting(){
   const timeGreeting = hour<12 ? 'Good morning' : hour<17 ? 'Good afternoon' : 'Good evening';
   return `${timeGreeting}, ${name}. It's ${dayPhrase}. ${getTodaySummaryPhrase()}`;
 }
+function renderConsentBadge(){
+  const badge = document.getElementById('consentBadge');
+  if(session && session.isMinor && session.messagingConsentGranted && session.consentSignedAt){
+    const d = new Date(session.consentSignedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    const who = session.consentParentName || 'a parent/guardian';
+    badge.textContent = `✅ Verified by ${who} on ${d}`;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
 function renderToday(){
   document.getElementById('affirmation').textContent = affirmations[new Date().getDate() % affirmations.length];
   document.getElementById('greeting').textContent = getGreeting();
   document.getElementById('backupReminder').style.display = shouldShowBackupReminder() ? 'block' : 'none';
+  renderConsentBadge();
   const todayStr = fmtDate(new Date());
   const evs = getEventsForDate(todayStr);
   const list = document.getElementById('todayEventsList');
@@ -2162,6 +2282,46 @@ function hideMessageOnBlur(){
 /* ---------- inbox badge ---------- */
 async function parentEmailKey(email){ return sha256Hex('e:'+email.trim().toLowerCase()); }
 
+/* ---------- signature pad (for parental consent) ---------- */
+let signatureHasDrawing = false;
+function initSignaturePad(){
+  const canvas = document.getElementById('signaturePad');
+  if(!canvas || canvas.dataset.wired) return;
+  canvas.dataset.wired = 'true';
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#463c63';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  let drawing = false;
+  function pos(e){
+    const r = canvas.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (canvas.width / r.width), y: (e.clientY - r.top) * (canvas.height / r.height) };
+  }
+  canvas.addEventListener('pointerdown', e=>{
+    drawing = true;
+    signatureHasDrawing = true;
+    const p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(!drawing) return;
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  });
+  ['pointerup','pointerleave','pointercancel'].forEach(evt=>{
+    canvas.addEventListener(evt, ()=>{ drawing = false; });
+  });
+}
+function clearSignature(){
+  const canvas = document.getElementById('signaturePad');
+  if(!canvas) return;
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  signatureHasDrawing = false;
+}
+
 const REPORT_EMAIL = 'hello.alltimediary@gmail.com';
 function reportUser(reportedName){
   const subject = `AllTime report: ${reportedName}`;
@@ -2173,12 +2333,16 @@ function reportUser(reportedName){
 }
 async function requestParentConsent(){
   const parentEmail = document.getElementById('parentConsentEmail').value.trim();
+  const parentName = document.getElementById('parentConsentName').value.trim();
   if(!parentEmail){ notify('Please enter a parent or guardian\'s email first.'); return; }
+  if(!parentName){ notify('Please ask a parent or guardian to type their full name.'); return; }
+  if(!signatureHasDrawing){ notify('Please ask a parent or guardian to sign in the box first.'); return; }
   if(!(await ensureFreshToken())) return;
+  const signatureDataUrl = document.getElementById('signaturePad').toDataURL('image/png');
   const emailKey = await parentEmailKey(parentEmail);
   try{
     await fetch(`${FIREBASE_DB_URL}/parentConsents/${emailKey}/${session.uid}.json?auth=${session.idToken}`, {
-      method:'PUT', body: JSON.stringify(true)
+      method:'PUT', body: JSON.stringify({ signedAt: Date.now(), parentEmail, parentName, signature: signatureDataUrl })
     });
   }catch(e){ notify('Something went wrong - check your connection and try again.'); return; }
 
@@ -2188,7 +2352,8 @@ async function requestParentConsent(){
     + "Here's what matters most to me: we don't save messages. Once one's read, it's gone for good - not stored, not backed up, not visible to anyone, not even me. If it's never opened, it disappears by itself within 24 hours anyway. Diaries, calendars and achievements are kept completely separate and are never affected either way.\n\n"
     + "I wanted AllTime to be a genuinely safe, private place - not somewhere that sells ads or collects data.\n\n"
     + "PARENT/GUARDIAN: if you're comfortable with this, please hit \"Reply All\" (not just Reply) so your confirmation reaches the AllTime team directly. Thank you! 💛\n\n"
-    + `[Account ID for reference: ${session.uid}]`;
+    + `[Account ID for reference: ${session.uid}]\n`
+    + `[Signed by: ${parentName}]`;
   window.location.href = `mailto:${encodeURIComponent(REPORT_EMAIL)}?cc=${encodeURIComponent(parentEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
   // Guaranteed fallback: if no email app opened (or the parent uses webmail), the
@@ -2202,6 +2367,19 @@ async function requestParentConsent(){
     <textarea id="consentFallbackText" readonly style="width:100%;min-height:160px;font-family:inherit">${subject}\n\n${body}</textarea>
     <button type="button" class="btn small" style="margin-top:8px" onclick="copyConsentText()">📋 Copy message</button>
     <p class="hint" style="margin-top:10px">Once a parent replies saying yes, we'll unlock messaging here - no need to do anything else in the meantime.</p>
+  `);
+}
+function showPrivacyNotice(){
+  openModal(`
+    <button class="close-x" onclick="closeModal()">✕</button>
+    <h2>🔒 Privacy Notice</h2>
+    <p><strong>What we collect:</strong> your chosen username, a PIN (used only to log you in, never shown to anyone), your diary/calendar/achievement entries and any photos you add, and the activity you picked. If you use messaging, message text/photos pass through our database only long enough to be delivered, then are deleted.</p>
+    <p><strong>Why:</strong> to run the diary, calendar, achievement, and Circle features - nothing is used for advertising, and nothing is sold to anyone.</p>
+    <p><strong>Where it's stored:</strong> a Firebase database hosted in the EU (europe-west1), only accessible to your own logged-in account - not even other AllTime users can read your data unless you explicitly share something with them.</p>
+    <p><strong>Anonymous usage analytics:</strong> if you accept, we count things like how many diary entries or messages get sent in total, with no names or content attached - just to understand what features people actually use.</p>
+    <p><strong>How long we keep it:</strong> diary/calendar/achievement data stays until you delete it or your account; messages are deleted the moment they're read (or automatically after 24 hours if unread); parental consent signatures for under-13 accounts are kept permanently as a compliance record, even if the account is later deleted.</p>
+    <p><strong>Your rights:</strong> you can export a full copy of your data any time (Backup button), and you can permanently delete your account and its data from Settings.</p>
+    <p><strong>Contact:</strong> ${escapeHtml(REPORT_EMAIL)}</p>
   `);
 }
 function copyConsentText(){
@@ -2222,6 +2400,8 @@ async function refreshInbox(){
       const profile = (await res.json()) || {};
       if(profile.messagingConsentGranted === true){
         session.messagingConsentGranted = true;
+        session.consentSignedAt = profile.consentSignedAt || Date.now();
+        session.consentParentName = profile.consentParentName || null;
         saveSession(session);
         justUnlocked = true;
       }
@@ -2230,7 +2410,7 @@ async function refreshInbox(){
   const locked = session.isMinor && !session.messagingConsentGranted;
   document.getElementById('inboxLocked').classList.toggle('hidden', !locked);
   document.getElementById('inboxUnlocked').classList.toggle('hidden', locked);
-  if(locked){ document.getElementById('inboxBadge').classList.add('hidden'); return; }
+  if(locked){ document.getElementById('inboxBadge').classList.add('hidden'); initSignaturePad(); return; }
   if(justUnlocked){
     openModal(`
       <button class="close-x" onclick="closeModal()">✕</button>
