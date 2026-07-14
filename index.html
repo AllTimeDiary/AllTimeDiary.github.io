@@ -2098,12 +2098,13 @@ async function requestParentConsent(){
     });
   }catch(e){ notify('Something went wrong - check your connection and try again.'); return; }
 
-  const subject = "A note from Ocean about AllTime";
+  const subject = `A note from Ocean about AllTime - ${session.displayName} (@${session.username})`;
   const body = "Hi! I'm Ocean - I help make AllTime, and I want everyone who uses it to feel as safe here as I do.\n\n"
-    + `Your child (${session.displayName}) would like to turn on messaging, so they can chat with friends they've chosen to add to their own private Circle themselves - never a stranger, and never anyone who hasn't agreed to connect first.\n\n`
+    + `Your child (${session.displayName}, username: ${session.username}) would like to turn on messaging, so they can chat with friends they've chosen to add to their own private Circle themselves - never a stranger, and never anyone who hasn't agreed to connect first.\n\n`
     + "Here's what matters most to me: we don't save messages. Once one's read, it's gone for good - not stored, not backed up, not visible to anyone, not even me. If it's never opened, it disappears by itself within 24 hours anyway. Diaries, calendars and achievements are kept completely separate and are never affected either way.\n\n"
     + "I wanted AllTime to be a genuinely safe, private place - not somewhere that sells ads or collects data.\n\n"
-    + "PARENT/GUARDIAN: if you're comfortable with this, please hit \"Reply All\" (not just Reply) so your confirmation reaches the AllTime team directly. Thank you! 💛";
+    + "PARENT/GUARDIAN: if you're comfortable with this, please hit \"Reply All\" (not just Reply) so your confirmation reaches the AllTime team directly. Thank you! 💛\n\n"
+    + `[Account ID for reference: ${session.uid}]`;
   window.location.href = `mailto:${encodeURIComponent(REPORT_EMAIL)}?cc=${encodeURIComponent(parentEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
   // Guaranteed fallback: if no email app opened (or the parent uses webmail), the
