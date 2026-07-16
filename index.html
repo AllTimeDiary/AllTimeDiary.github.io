@@ -111,10 +111,10 @@ h1,h2,h3{font-family:'Quicksand',sans-serif;font-weight:700;margin:0 0 8px}
 .app-header{
   position:sticky;top:0;z-index:20;
   background:linear-gradient(120deg,var(--blue-light) 0%,var(--pink-light) 35%,var(--gold-light) 65%,var(--purple-light) 100%);
+  background-size:300% 300%;
+  animation:gradientDrift 18s ease infinite;
   padding:14px 16px 10px;
   text-align:center;
-  border-bottom:3px solid var(--purple);
-  box-shadow:var(--shadow);
 }
 .today-date{
   font-family:'Quicksand',sans-serif;
@@ -149,9 +149,12 @@ nav.tabs{
   display:flex;flex-wrap:wrap;
   gap:6px;justify-content:space-between;align-items:center;
   max-width:960px;margin:0 auto;
-  background:var(--card-bg);
-  padding:8px 16px;
-  border-bottom:2px solid var(--line);
+  background:linear-gradient(120deg,var(--blue-light) 0%,var(--pink-light) 35%,var(--gold-light) 65%,var(--purple-light) 100%);
+  background-size:300% 300%;
+  animation:gradientDrift 18s ease infinite;
+  padding:8px 16px 14px;
+  border-bottom:3px solid var(--purple);
+  box-shadow:var(--shadow);
 }
 .tab-btn{
   border:2px solid transparent;
@@ -188,7 +191,8 @@ main{max-width:960px;margin:0 auto;padding:16px}
   margin-bottom:16px;
 }
 @media (prefers-reduced-motion: reduce){
-  .card,.affirmation-banner,.discover-banner,.tile-pink,.tile-blue,.tile-gold,.feature-link-card{
+  .card,.affirmation-banner,.discover-banner,.tile-pink,.tile-blue,.tile-gold,.feature-link-card,
+  .app-header,nav.tabs{
     animation:none;
   }
 }
