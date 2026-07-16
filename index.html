@@ -236,15 +236,17 @@ main{max-width:960px;margin:0 auto;padding:16px}
   animation:gradientDrift 18s ease infinite;
 }
 #parentBox{
-  width:100%;text-align:left;margin-top:10px;cursor:pointer;
-  border-radius:12px;padding:10px 14px;
-  background:rgba(255,255,255,0.45);
+  text-align:center;cursor:pointer;
+  border:2px solid transparent;border-radius:999px;padding:8px 14px;
+  display:inline-flex;flex-direction:column;align-items:center;gap:1px;
+  max-width:180px;
 }
-#parentBox.parent-box-pending{border-left:4px solid var(--purple)}
-#parentBox.parent-box-pending h2{color:var(--purple);font-size:.95rem;margin-bottom:2px}
-#parentBox.parent-box-confirmed{border-left:4px solid var(--gold);padding:8px 14px}
-#parentBox.parent-box-confirmed h2{font-size:.8rem;color:var(--ink-soft);font-weight:600;margin-bottom:2px}
-#parentBox.parent-box-confirmed #parentBoxStatus{font-size:.72rem}
+#parentBox h2{font-size:.8rem;margin:0;font-weight:700}
+#parentBox #parentBoxStatus{font-size:.62rem;font-weight:600;color:var(--ink-soft)}
+#parentBox.parent-box-pending{background:var(--purple-light);border-color:var(--purple)}
+#parentBox.parent-box-pending h2{color:var(--purple)}
+#parentBox.parent-box-confirmed{background:var(--gold-light);border-color:var(--gold)}
+#parentBox.parent-box-confirmed h2{color:var(--ink)}
 .btn{
   background:var(--purple);
   color:#fff;
@@ -576,12 +578,16 @@ footer{
   <button class="tab-btn active" data-tab="today">🏠 Today</button>
   <button class="tab-btn" data-tab="calendar">📅 Calendar</button>
   <button class="tab-btn" data-tab="diary">📖 Diary</button>
-  <button class="tab-btn" data-tab="achievements">🏆 Achievements</button>
-  <button class="tab-btn" data-tab="discover">🔎 Discover</button>
   <button class="tab-btn" data-tab="inbox">
     <span class="tab-btn-main">👥 Your Circle<span class="inbox-badge hidden" id="inboxBadge">0</span></span>
     <span class="tab-subtext">friends</span>
   </button>
+  <button class="tab-btn" data-tab="achievements">🏆 Achievements</button>
+  <button class="tab-btn" data-tab="discover">🔎 Discover</button>
+  <div class="tile hidden" id="parentBox" role="button" tabindex="0" onclick="openParentBoxModal()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openParentBoxModal();}">
+    <h2 id="parentBoxTitle">💛 Parent/Guardian</h2>
+    <div id="parentBoxStatus" class="empty-note"></div>
+  </div>
 </nav>
 
 <main>
@@ -594,10 +600,6 @@ footer{
       <div class="affirmation" id="affirmation"></div>
       <div class="greeting" id="greeting"></div>
       <div class="weather-line hidden" id="weatherLine"></div>
-      <div class="tile hidden" id="parentBox" role="button" tabindex="0" onclick="openParentBoxModal()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openParentBoxModal();}">
-        <h2 id="parentBoxTitle">💛 Parent/Guardian</h2>
-        <div id="parentBoxStatus" class="empty-note"></div>
-      </div>
     </div>
     <div class="today-grid">
       <div class="card tile tile-pink" role="button" tabindex="0" onclick="switchTab('calendar')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchTab('calendar');}">
@@ -961,7 +963,7 @@ footer{
       <button class="btn" onclick="openParentConsentModal()">Ask a parent/guardian to confirm</button>
       <p class="hint" style="margin-top:10px">You can keep using your diary, calendar and achievements right away — this only affects messaging.</p>
     </div>
-    <div id="inboxUnlocked">
+    <div id="inboxUnlocked" class="discover-grid">
     <div class="card">
       <h2>⭐ Your Circle</h2>
       <p class="hint">Star someone to move them into your Inner Circle. Only you can ever see this list.</p>
